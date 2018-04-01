@@ -1,4 +1,3 @@
-
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,9 +45,9 @@ int main(void) {
 	};
 
 	char dataBytes[STRING_SIZE];
-
-
 	packetHeader packetHeaderRecd;
+
+	int headerBytesRecd;
 	int dataBytesRecd;
 
 	//string dataBytes;
@@ -106,8 +105,7 @@ int main(void) {
 
 	while(packetHeaderRecd.count != 0) {
 	dataBytesRecd = recv(sock_client, dataBytes, STRING_SIZE, 0);
-	packetHeaderRecd = recv(sock_client, (char *)packetHeader, STRING_SIZE, 0);
-
+	headerBytesRecd = recv(sock_client, &packetHeaderRecd, sizeof(packetHeader), 0);
 
 	cout <<  "Packet " << packetHeaderRecd.sequenceNumber <<
 			"received with" << packetHeaderRecd.count << "data bytes";
@@ -131,6 +129,9 @@ int main(void) {
 	cout << "End of Transmission Packet with sequence number " << packetHeaderRecd.sequenceNumber
 			<< "received with " << packetHeaderRecd.count << "data bytes";
 
+
+
+	//close the socket
 
 	close(sock_client);
 
