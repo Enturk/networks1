@@ -53,6 +53,7 @@ int main(void) {
    ssize_t read;
    char file_name[0x100];
    short packet_count = 0;
+   short data_start = 4;
    
    char debug = 1; // debugging variable, TODO set to 0 when done
 
@@ -118,8 +119,10 @@ int main(void) {
             printf("\nwith length %d\n\n", bytes_recd);
          }
 
-        /* TODO get filename */
-        rec_message
+        /* get filename */
+        for (i=data_start; i<sizeof(rec_message); i++)
+           filename[i-data_start] = rec_message[i];
+        i=0 // reset i to be environmentally friendly
 
         /* TODO add file tree */
          snprintf(file_name, sizeof(file_name), "%s.txt", random string);
@@ -142,13 +145,13 @@ int main(void) {
              }
  	     msg_len = strlen(line)+4;                 
 
-	// TODO  header 1: packet sequence number
-            send_message[0] = 
-            send_message[1] = 
+	// header 1: packet sequence number
+            send_message[0] = packet_count >> 8; //Most significant byte
+            send_message[1] = packet_count & 0x00FF; //Least significant byte
 
-	// TODO header 2: data size
-            send_message[2] = 
-            send_message[3] = 
+	// header 2: data size
+            send_message[2] = strlen(line) >> 8; //Most significant byte
+            send_message[3] = strlen(line) & 0x00FF; //Least significant pyte
 
 	// packet data
             for (i=4; i<msg_len; i++)
@@ -157,6 +160,7 @@ int main(void) {
          /* send message */
  
             bytes_sent = send(sock_connection, modifiedSentence, msg_len, 0);
+            packet_count++;
          }
 
 	 // close file and free up line memory (probably unnecessary, but man says best do it)
