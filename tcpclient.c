@@ -1,3 +1,5 @@
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,14 +39,17 @@ int main(void) {
 
 	int totalDataBytesReceived = 0;				// all counts summed up
 
-	struct packet {
+	struct packetHeader {
 		int sequenceNumber;
 		int count;
-		char dataBytes[STRING_SIZE];
+		//char dataBytes[STRING_SIZE];
 	};
 
+	char dataBytes[STRING_SIZE];
 
-	packet packetRecd;
+
+	packetHeader packetHeaderRecd;
+	int dataBytesRecd;
 
 	//string dataBytes;
 
@@ -99,32 +104,35 @@ int main(void) {
 
 	// get response from server
 
-	while(packetRecd.count != 0) {
-	bytes_recd = recv(sock_client, &packetRecd, STRING_SIZE, 0);
+	while(packetHeaderRecd.count != 0) {
+	dataBytesRecd = recv(sock_client, dataBytes, STRING_SIZE, 0);
+	packetHeaderRecd = recv(sock_client, (char *)packetHeader, STRING_SIZE, 0);
 
-	cout <<  "Packet " << packetRecd.sequenceNumber <<
-			"received with" << packetRecd.count << "data bytes";
+
+	cout <<  "Packet " << packetHeaderRecd.sequenceNumber <<
+			"received with" << packetHeaderRecd.count << "data bytes";
 
 
 	ofstream out ("out.txt", ios::app);
-	cin >> packetRecd.dataBytes;
+	//cin >> packetRecd.dataBytes;
 
 	cout << "The response from server is:" << endl;
-	cout << packetRecd.dataBytes;
+	cout << dataBytesRecd;
 
 	totalPacketsRecd++;
-	totalDataBytesReceived = totalDataBytesReceived + packetRecd.count;
+	totalDataBytesReceived = totalDataBytesReceived + packetHeaderRecd.count;
 	}
 
 	totalPacketsRecd = totalPacketsRecd + 1; 	// for termination packet
 
-	cout << "End of Transmission Packet with sequence number " << packetRecd.sequenceNumber
-			<< "received with " << packetRecd.count << "data bytes";
+	cout << "End of Transmission Packet with sequence number " << packetHeaderRecd.sequenceNumber
+			<< "received with " << packetHeaderRecd.count << "data bytes";
 
+
+	//close the socket
 
 	close(sock_client);
 
 
 
 }
-
