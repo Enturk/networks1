@@ -1,5 +1,5 @@
 
-
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,7 +113,10 @@ int main(void) {
 			"received with" << packetHeaderRecd.count << "data bytes";
 
 
-	ofstream out ("out.txt", ios::app);
+	ofstream out ("out.txt");
+	out.open("out.txt");
+	out << dataBytes << endl;
+	out.close();
 	//cin >> packetRecd.dataBytes;
 
 	cout << "The response from server is:" << endl;
@@ -128,8 +131,6 @@ int main(void) {
 	cout << "End of Transmission Packet with sequence number " << packetHeaderRecd.sequenceNumber
 			<< "received with " << packetHeaderRecd.count << "data bytes";
 
-
-	//close the socket
 
 	close(sock_client);
 
