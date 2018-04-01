@@ -114,7 +114,7 @@ int main(void) {
 
 
 	ofstream out ("out.txt");
-	out.open("out.txt");
+	out.open("out.txt", ios::ate);
 	out << dataBytes << endl;
 	out.close();
 	//cin >> packetRecd.dataBytes;
