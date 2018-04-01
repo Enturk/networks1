@@ -129,6 +129,11 @@ int main(void) {
  
             bytes_sent = send(sock_connection, modifiedSentence, msg_len, 0);
          }
+
+	 // close file and free up line memory (probably unnecessary, but man says best do it)
+         fclose(fp);
+         if (line)
+            free(line);
       }
 
       /* close the socket */
