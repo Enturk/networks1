@@ -17,6 +17,7 @@
    number to prevent conflicts with others in the class. */
 
 #define SERV_TCP_PORT 45054
+#define _GNU_SOURCE
 
 int main(void) {
 
@@ -37,7 +38,12 @@ int main(void) {
    unsigned int msg_len;  /* length of message */
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
    unsigned int i;  /* temporary loop variable */
-
+   
+   FILE * fp;
+   char * line = NULL;
+   size_t len = 0;
+   ssize_t read;
+   char file_name[0x100];
    /* open a socket */
 
    if ((sock_server = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -75,22 +81,8 @@ int main(void) {
   
    client_addr_len = sizeof (client_addr);
 
-   /* open file to write incoming crap */
-   FILE *pFile;
-   char buffer[256];
-
-   pFile=fopen("myfile2.txt", "a");
-   if(pFile==NULL) {
-      perror("Error opening file.");
-      close(sock_servver);
-      exit(1); 
-   }
-   else {
-      while(fgets(buffer, sizeof(buffer), pFile)) {
-        fprintf(pFile2, "%s", buffer);
-
-
    /* wait for incoming connection requests in an indefinite loop */
+
    for (;;) {
 
       sock_connection = accept(sock_server, (struct sockaddr *) &client_addr, 
@@ -107,32 +99,40 @@ int main(void) {
 
       bytes_recd = recv(sock_connection, sentence, STRING_SIZE, 0);
 
-      //TODO strip header
-      buffer = bytes_recd;
-      while(fgets(buffer, sizeof(buffer), pFile)) {
-         fprintf(pFile, "%s", buffer);    
-      }
-
-      // maybe remove this later?
-      if (bytes_recd > 0){
+      if (bytes_recd > 0) {
          printf("Received Sentence is:\n");
          printf("%s", sentence);
          printf("\nwith length %d\n\n", bytes_recd);
 
+        /* TODO get filename */
+        /* TODO add file tree */
+         snprintf(file_name, sizeof(file_name), "%s.txt", random string);
+
         /* prepare the message to send */
 
          msg_len = bytes_recd;
+         fp = fopen(file_name, "r");
+         if (fp == NULL) {
+            perror("No file named %hu\n\n", file_name );
+            close(sock_server);
+            exit(1);
+         }
 
-         for (i=0; i<msg_len; i++)
-            modifiedSentence[i] = toupper (sentence[i]);
+        /* TODO make header */
+         while ((read = getline(&line, &len, fp)) != -1) {
+             //FIXME needs to break down line into multiple messages if line is too long
+ 	    // FIXME needs to not throw error if line is too short
+            for (i=0; i<msg_len; i++)
+               modifiedSentence[i] = line[i];
 
          /* send message */
  
-         bytes_sent = send(sock_connection, modifiedSentence, msg_len, 0);
+            bytes_sent = send(sock_connection, modifiedSentence, msg_len, 0);
+         }
       }
 
-      /* close the socket */;
+      /* close the socket */
+
       close(sock_connection);
    } 
-   fclose(pFile);
 }
