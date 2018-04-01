@@ -33,8 +33,10 @@ int main(void) {
                                         stores client address */
    unsigned int client_addr_len;  /* Length of client address structure */
 
-   char sentence[STRING_SIZE];  /* receive message */
-   char modifiedSentence[STRING_SIZE]; /* send message */
+   char rec_message[STRING_SIZE];  /* receive message */
+   int rec_packet_num; // first received header containing packet sequence numebr
+   int rec_data_size; // second received header containing packet data size
+   char send_message[STRING_SIZE]; /* send message */
    unsigned int msg_len;  /* length of message */
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
    unsigned int i;  /* temporary loop variable */
@@ -44,6 +46,10 @@ int main(void) {
    size_t len = 0;
    ssize_t read;
    char file_name[0x100];
+   int packet_count = 0;
+   
+   char debug = 1; // debugging variable, TODO set to 0 when done
+
    /* open a socket */
 
    if ((sock_server = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -91,26 +97,29 @@ int main(void) {
                         connection request comes from a client */
       if (sock_connection < 0) {
          perror("Server: accept() error\n"); 
-         close(sock_server);
-         exit(1);
+//         close(sock_server);
+//         exit(1);
       }
  
       /* receive the message */
 
-      bytes_recd = recv(sock_connection, sentence, STRING_SIZE, 0);
+      bytes_recd = recv(sock_connection, rec_message, STRING_SIZE, 0);
 
       if (bytes_recd > 0) {
-         printf("Received Sentence is:\n");
-         printf("%s", sentence);
-         printf("\nwith length %d\n\n", bytes_recd);
+         if (debug = 1) {
+            printf("Received Sentence is:\n");
+            printf("%s", rec_message);
+            printf("\nwith length %d\n\n", bytes_recd);
+         }
 
         /* TODO get filename */
+        rec_message
+
         /* TODO add file tree */
          snprintf(file_name, sizeof(file_name), "%s.txt", random string);
 
         /* prepare the message to send */
 
-         msg_len = bytes_recd;
          fp = fopen(file_name, "r");
          if (fp == NULL) {
             perror("No file named %hu\n\n", file_name );
@@ -120,10 +129,16 @@ int main(void) {
 
         /* TODO make header */
          while ((read = getline(&line, &len, fp)) != -1) {
-             //FIXME needs to break down line into multiple messages if line is too long
- 	    // FIXME needs to not throw error if line is too short
-            for (i=0; i<msg_len; i++)
-               modifiedSentence[i] = line[i];
+             //maybe break line into multiple messages if line is too long
+             if (strlen(line)>STRINGSIZE-4) {
+                perror("This line is too long and will be skipped:\n%hu\n\n", line);
+                continue;
+             }
+ 	     msg_len = strlen(line)+4;                 
+	// FIXME needs to not throw error if line is too short
+            send_message[0] = 
+            for (i=4; i<msg_len; i++)
+               send_message[i] = line[i-4];
 
          /* send message */
  
