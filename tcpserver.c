@@ -19,6 +19,12 @@
 #define SERV_TCP_PORT 45054
 #define _GNU_SOURCE
 
+// from https://stackoverflow.com/questions/17768625/2-chars-to-short-in-c
+unsigned short getShort(unsigned char* array, int offset)
+{
+    return (short)(((short)array[offset]) << 8) | array[offset + 1];
+}
+
 int main(void) {
 
    int sock_server;  /* Socket on which server listens to clients */
@@ -34,8 +40,8 @@ int main(void) {
    unsigned int client_addr_len;  /* Length of client address structure */
 
    char rec_message[STRING_SIZE];  /* receive message */
-   int rec_packet_num; // first received header containing packet sequence numebr
-   int rec_data_size; // second received header containing packet data size
+   short rec_packet_num; // first received header containing packet sequence numebr
+   short rec_data_size; // second received header containing packet data size
    char send_message[STRING_SIZE]; /* send message */
    unsigned int msg_len;  /* length of message */
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
@@ -46,7 +52,7 @@ int main(void) {
    size_t len = 0;
    ssize_t read;
    char file_name[0x100];
-   int packet_count = 0;
+   short packet_count = 0;
    
    char debug = 1; // debugging variable, TODO set to 0 when done
 
@@ -135,8 +141,16 @@ int main(void) {
                 continue;
              }
  	     msg_len = strlen(line)+4;                 
-	// FIXME needs to not throw error if line is too short
+
+	// TODO  header 1: packet sequence number
             send_message[0] = 
+            send_message[1] = 
+
+	// TODO header 2: data size
+            send_message[2] = 
+            send_message[3] = 
+
+	// packet data
             for (i=4; i<msg_len; i++)
                send_message[i] = line[i-4];
 
