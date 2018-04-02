@@ -10,7 +10,7 @@
 #include <netinet/in.h>     /* for sockaddr_in */
 #include <unistd.h>         /* for close */
 
-#define STRING_SIZE 1024
+#define STRING_SIZE 80
 
 int main(void) {
 
@@ -94,12 +94,12 @@ int main(void) {
    fileRequestHeader.count = sizeof(sentence);
    
    /* send header */
-   bytes_sent = send(sock_client, &fileRequestHeader, 32, 0); // Sethi trick
+   bytes_sent = send(sock_client, &fileRequestHeader, sizeof(fileRequestHeader), 0); // Sethi trick
 
    // error checking
    if (bytes_sent < 0) {
       perror("Send error, trying again... ");
-      bytes_sent = send(sock_client, &fileRequestHeader, 32, 0); // Sethi trick
+      bytes_sent = send(sock_client, &fileRequestHeader, sizeof(fileRequestHeader), 0); // Sethi trick
       if (bytes_sent < 0)
          perror("Resend failed, giving up.\n");
       else {
@@ -109,6 +109,7 @@ int main(void) {
       printf("Header packet for file name request transmitted ");
       printf("with %d data bytes\n", bytes_sent);
    }
+   msg_len = fileRequestHeader.count;
 
 
    // send filename
@@ -130,11 +131,10 @@ int main(void) {
 
    // setup file receipt
    struct packetHeader catchFileHeader;
-   catchFileHeader.sequenceNumber = 1; // TODO CHECK THIS
+   catchFileHeader.sequenceNumber = 1;
 
    /* open file to write incoming crap */
    FILE *pFile;
-   char buffer[256];
 
    pFile=fopen("out.txt", "a");
    if(pFile==NULL) {
@@ -145,27 +145,45 @@ int main(void) {
 
    while (catchFileHeader.sequenceNumber != 0){
 
+	//TODO use net-to-host conversion?
       /* get header response from server */  
       bytes_recd = recv(sock_client, &catchFileHeader, sizeof(catchFileHeader), 0); 
+      msglen=catchFileHeader.count;
 
-	//TODO error checking
-      printf("\nThe response from server is:\n");
-      printf("%s\n\n", modifiedSentence);
+	// error checking
+      if (bytes_recd < 0) {
+         perror("Recv error. Good luck with that...\n");
+         close(sock_server);
+         exit(1);
+
+      } else if (bytes_recd == 0) {
+         perror("Recv got end-of-file return\n");
+         close(sock_server);
+         exit(1);
+
+      } else { // bytes_recd > 0
+         if (debug == 1) {
+            printf("Received header packet number field is: %d\n", catchFileHeader.sequence.Number);
+            printf("Received header data count field is: %d\n\n", msg_len);
+         }
 
 	// receive data from server
-      bytes_recd = recv(sock_client, receivedSentence, sizeof(receivedSentence), 0)
+      bytes_recd = recv(sock_client, receivedSentence, STRING_SIZE, 0)
 
 	//TODO error checking
 
-	//TODO append data to file
-      while (fgets(buffer, sizeof(buffer),receivedSentence )) {
-        fprintf(pFile, "%s", buffer);
+	// append data to file
+      for (i=0; i<msglen; i++) {
+        fprintf(pFile, "%s", receivedSentence[i]);
       }
+      fprintf(pFile, "\n")
 
+	// final report tracking
       packetQty++;
-      dataSize+=sizeof(receivedSentence);
+      dataSize+=msg_len;
    }
-   /* close the socket */
 
+   /* close the things */
+   fclose(pFile);
    close (sock_client);
 }
