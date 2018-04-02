@@ -41,7 +41,9 @@ int main(void) {
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
    unsigned int i;  /* temporary loop variable */
    short net_number; // for use with htons
- 
+   long SIXTEEN_ZEROS = 0x00000000; // for end-of-transmission packet header legibility
+   unsigned int total_data = 0; // to produce the end-of-run statistic
+
    FILE * fp;
    char * line = NULL;
    size_t len = 0;
@@ -168,11 +170,16 @@ int main(void) {
                bytes_sent = send(sock_connection, send_message, msg_len, 0);
                if (bytes_sent < 0)
                   perror("Resend failed, giving up.\n");
-               else perror("Resend successful. Party on.\n");
+               else {
+                  printf("Resend successful. Party on.\n");
+                  printf("Packet %d transmitted ", packet_count);
+                  printf("with %d data bytes\n", bytes_sent);
+                  total_data += bytes_sent;
+               }
             } else {
-               printf("Send message is:\n");
-               printf("%s", send_message);
-               printf("\nwith length %d\n\n", bytes_sent);
+               printf("Packet %d transmitted ", packet_count);
+               printf("with %d data bytes\n", bytes_sent);
+               total_data += bytes_sent;
             }
 
 	// housekeeping: clean up send_message
@@ -191,15 +198,19 @@ int main(void) {
                bytes_sent = send(sock_connection, send_message, msg_len, 0);
                if (bytes_sent < 0)
                   perror("Resend failed, giving up.\n");
-               else perror("Resend successful. Party on.\n");
+               else {
+                  printf("Resend successful. Party on.\n");
+                  printf("Packet %d transmitted ", packet_count);
+                  printf("with %d data bytes\n", bytes_sent);
+                  total_data += bytes_sent;
+               }
             } else {
-               printf("Send message is:\n");
-               printf("%s", send_message);
-               printf("\nwith length %d\n\n", bytes_sent);
+               printf("Packet %d transmitted ", packet_count);
+               printf("with %d data bytes\n", bytes_sent);
+               total_data += bytes_sent;
             }
 
-
-        // housekeeping: clean up send_message
+	// housekeeping: clean up send_message
             memset(send_message, 0, sizeof(send_message));
             packet_count++;
          }
@@ -210,19 +221,24 @@ int main(void) {
             free(line);
 
 	// send end-of-transmission packet: 4 bytes of all zeros
-         bytes_sent = send(sock_connection, 0x00000000, 4, 0);
+         bytes_sent = send(sock_connection, SIXTEEN_ZEROS, sizeof(SIXTEEN_ZEROS), 0);
 
         // error checking
          if (bytes_sent < 0) {
             perror("Send error, trying again... ");
-            bytes_sent = send(sock_connection, send_message, msg_len, 0);
+            bytes_sent = send(sock_connection, SIXTEEN_ZEROS, sizeof(SIXTEEN_ZEROS), 0);
             if (bytes_sent < 0)
                perror("Resend failed, giving up.\n");
-            else perror("Resend successful. Party on.\n");
+            else {
+               printf("Resend successful. Party on.\n");
+               printf("End of Transmission Packet with sequence number %d transmitted ", SIXTEEN_ZEROS);
+               printf("with %d data bytes\n\n", bytes_sent);
+               total_data += bytes_sent;
+            }
          } else {
-            printf("Send message is:\n");
-            printf("%s", send_message);
-            printf("\nwith length %d\n\n", bytes_sent);
+            printf("End of Transmission Packet with sequence number %d transmitted ", SIXTEEN_ZEROS);
+            printf("with %d data bytes\n\n", bytes_sent);
+            total_data += bytes_sent;
          }
 
       }
@@ -231,4 +247,9 @@ int main(void) {
       close(sock_connection);
 
    } 
+
+   // end of program statistics
+   printf("Number of data packets transmitted: %d\n", packet_count-1);
+   printf("Total number of data bytes transmitted: %d\n", total_data);
+
 }
