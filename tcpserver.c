@@ -122,14 +122,14 @@ int main(void) {
         /* get filename */
         for (i=data_start; i<sizeof(rec_message); i++)
            file_name[i-data_start] = rec_message[i];
-        i=0 // reset i to be environmentally friendly
+        i=0; // reset i to be environmentally friendly
         if (debug == 1)
-           printf("Requsted file is %s", file_name);
+           printf("Requsted file is %s\n", file_name);
 
         /* prepare the message to send */
          fp = fopen(file_name, "r");
          if (fp == NULL) {
-            perror("No file named %hu\n\n", file_name );
+            perror("No file of requested name, hanging up on client.\n" );
             close(sock_server);
             exit(1);
          }
@@ -137,8 +137,8 @@ int main(void) {
         /* make header */
          while ((read = getline(&line, &len, fp)) != -1) {
              //maybe break line into multiple messages if line is too long
-             if (strlen(line)>STRINGSIZE) {
-                perror("This line is too long and will be skipped:\n%hu\n\n", line);
+             if (strlen(line)>STRING_SIZE) {
+                perror("Next line is too long and will be skipped.\n";
                 continue;
              }
  	     msg_len = strlen(line);                 
