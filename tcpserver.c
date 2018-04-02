@@ -138,7 +138,7 @@ int main(void) {
          while ((read = getline(&line, &len, fp)) != -1) {
              //maybe break line into multiple messages if line is too long
              if (strlen(line)>STRING_SIZE) {
-                perror("Next line is too long and will be skipped.\n";
+                perror("Next line is too long and will be skipped.\n");
                 continue;
              }
  	     msg_len = strlen(line);                 
