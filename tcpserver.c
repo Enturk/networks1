@@ -1,6 +1,6 @@
 /* tcpserver.c */
-/* Programmed by Adarsh Sethi */
-/* February 21, 2018 */    
+/* Programmed by Adarsh Sethi & Nazim Karaca*/
+/* February 21, 2018 & April 1, 2018 */    
 
 #include <ctype.h>          /* for toupper */
 #include <stdio.h>          /* for standard I/O functions */
@@ -113,7 +113,7 @@ int main(void) {
       bytes_recd = recv(sock_connection, rec_message, STRING_SIZE, 0);
 
       if (bytes_recd > 0) {
-         if (debug = 1) {
+         if (debug == 1) {
             printf("Received Sentence is:\n");
             printf("%s", rec_message);
             printf("\nwith length %d\n\n", bytes_recd);
@@ -121,14 +121,12 @@ int main(void) {
 
         /* get filename */
         for (i=data_start; i<sizeof(rec_message); i++)
-           filename[i-data_start] = rec_message[i];
+           file_name[i-data_start] = rec_message[i];
         i=0 // reset i to be environmentally friendly
-
-        /* TODO add file tree */
-         snprintf(file_name, sizeof(file_name), "%s.txt", random string);
+        if (debug == 1)
+           printf("Requsted file is %s", file_name);
 
         /* prepare the message to send */
-
          fp = fopen(file_name, "r");
          if (fp == NULL) {
             perror("No file named %hu\n\n", file_name );
@@ -136,14 +134,14 @@ int main(void) {
             exit(1);
          }
 
-        /* TODO make header */
+        /* make header */
          while ((read = getline(&line, &len, fp)) != -1) {
              //maybe break line into multiple messages if line is too long
-             if (strlen(line)>STRINGSIZE-4) {
+             if (strlen(line)>STRINGSIZE) {
                 perror("This line is too long and will be skipped:\n%hu\n\n", line);
                 continue;
              }
- 	     msg_len = strlen(line)+4;                 
+ 	     msg_len = strlen(line);                 
 
 	// header 1: packet sequence number
             send_message[0] = packet_count >> 8; //Most significant byte
@@ -153,13 +151,21 @@ int main(void) {
             send_message[2] = strlen(line) >> 8; //Most significant byte
             send_message[3] = strlen(line) & 0x00FF; //Least significant pyte
 
-	// packet data
-            for (i=4; i<msg_len; i++)
-               send_message[i] = line[i-4];
+	// send headers
+            bytes_sent = send(sock_connection, send_message, msg_len, 0);
 
-         /* send message */
- 
-            bytes_sent = send(sock_connection, modifiedSentence, msg_len, 0);
+	// housekeeping: clean up send_message
+            memset(send_message, 0, sizeof(send_message));
+
+	// packet data
+            for (i=0; i<msg_len; i++)
+               send_message[i] = line[i];
+
+         /* send data */ 
+            bytes_sent = send(sock_connection, send_message, msg_len, 0);
+
+        // housekeeping: clean up send_message
+            memset(send_message, 0, sizeof(send_message));
             packet_count++;
          }
 
