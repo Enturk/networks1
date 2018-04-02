@@ -41,7 +41,7 @@ int main(void) {
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
    unsigned int i;  /* temporary loop variable */
    short net_number; // for use with htons
-   long SIXTEEN_ZEROS = 0x00000000; // for end-of-transmission packet header legibility
+   long THIRTYTWO_ZEROS = 0x00000000; // for end-of-transmission packet header legibility
    unsigned int total_data = 0; // to produce the end-of-run statistic
 
    FILE * fp;
@@ -172,14 +172,10 @@ int main(void) {
                   perror("Resend failed, giving up.\n");
                else {
                   printf("Resend successful. Party on.\n");
-                  printf("Packet %d transmitted ", packet_count);
-                  printf("with %d data bytes\n", bytes_sent);
-                  total_data += bytes_sent;
                }
-            } else {
-               printf("Packet %d transmitted ", packet_count);
+            } else if (debug == 1) {
+               printf("Header packet for %d transmitted ", packet_count);
                printf("with %d data bytes\n", bytes_sent);
-               total_data += bytes_sent;
             }
 
 	// housekeeping: clean up send_message
@@ -188,6 +184,7 @@ int main(void) {
 	// packet data
             for (i=0; i<msg_len; i++)
                send_message[i] = line[i];
+            msg_len = sizeof(send_message);
 
          /* send data */ 
             bytes_sent = send(sock_connection, send_message, msg_len, 0);
@@ -221,24 +218,22 @@ int main(void) {
             free(line);
 
 	// send end-of-transmission packet: 4 bytes of all zeros
-         bytes_sent = send(sock_connection, htonl(SIXTEEN_ZEROS), sizeof(SIXTEEN_ZEROS), 0);
+         bytes_sent = send(sock_connection, htonl(THIRTYTWO_ZEROS), sizeof(THIRTYTWO_ZEROS), 0);
 
         // error checking
          if (bytes_sent < 0) {
             perror("Send error, trying again... ");
-            bytes_sent = send(sock_connection, htonl(SIXTEEN_ZEROS), sizeof(SIXTEEN_ZEROS), 0);
+            bytes_sent = send(sock_connection, htonl(THIRTYTWO_ZEROS), sizeof(THIRTYTWO_ZEROS), 0);
             if (bytes_sent < 0)
                perror("Resend failed, giving up.\n");
             else {
                printf("Resend successful. Party on.\n");
-               printf("End of Transmission Packet with sequence number %d transmitted ", SIXTEEN_ZEROS);
-               printf("with %d data bytes\n\n", bytes_sent);
-               total_data += bytes_sent;
+               printf("End of Transmission Packet with sequence number %d transmitted ", THIRTYTWO_ZEROS);
+               printf("with 0 data bytes\n\n");
             }
          } else {
-            printf("End of Transmission Packet with sequence number %d transmitted ", SIXTEEN_ZEROS);
-            printf("with %d data bytes\n\n", bytes_sent);
-            total_data += bytes_sent;
+            printf("End of Transmission Packet with sequence number %d transmitted ", THIRTYTWO_ZEROS);
+            printf("with 0 data bytes\n\n");
          }
 
       }
@@ -249,7 +244,7 @@ int main(void) {
    } 
 
    // end of program statistics
-   printf("Number of data packets transmitted: %d\n", packet_count-1);
+   printf("Number of data packets transmitted: %d\n", packet_count);
    printf("Total number of data bytes transmitted: %d\n", total_data);
 
 }
