@@ -107,17 +107,17 @@ int main(void) {
       bytes_recd = recv(sock_connection, rec_message, STRING_SIZE, 0);
 
       // error checking as recommended by Adarsh Sethi
-      if (bytes_rec < 0) {
+      if (bytes_recd < 0) {
          perror("Recv error. Good luck with that...");
          close(sock_server);
          exit(1);
 
-      } else if (bytes_rec == 0) {
+      } else if (bytes_recd == 0) {
          perror("Recv got end-of-file return");
          close(sock_server);
          exit(1);
 
-      } else { // bytes_rec > 0
+      } else { // bytes_recd > 0
          if (debug == 1) {
             printf("Received Sentence is:\n");
             printf("%s", rec_message);
@@ -180,7 +180,7 @@ int main(void) {
             free(line);
 
 	// send end-of-transmission packet: 4 bytes of all zeros
-         bytes_sent = send(soc_connection, 0x00000000, 4, 0);
+         bytes_sent = send(sock_connection, 0x00000000, 4, 0);
 
       }
 
