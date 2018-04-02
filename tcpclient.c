@@ -57,7 +57,7 @@ int main(void) {
 
 	//string dataBytes;
 
-	cout << "Enter name of file to be transfered" << endl;
+	cout << "Enter name of file to be transfered, including the extension (such as .txt or .c): " << endl;
 	cin >> fileTransferred;
 
 	name_len = strlen(fileTransferred) + 1;
@@ -110,23 +110,27 @@ int main(void) {
 
 
 
-	while(packetCount != 0) {															//ntohs send_message[0] >> 8
-																						//ntohs send_message[1]
+	while(packetCount != 0) {
+
+	//ntohs send_message[0] >> 8
+	//ntohs send_message[1]
+
 		headerBytesRecd = recv(sock_client, packetHeaderRecd , STRING_SIZE, 0);
+	//TODO error checking
 
 		packetCount = ntohs(packetHeaderRecd[0] >> 8) + ntohs(packetHeaderRecd[1]);
-		packetSequenceNumber = ntohs(packetHeaderRecd[2] >> 8) + ntohs(packetHeaderRecd[1]);
+		packetSequenceNumber = ntohs(packetHeaderRecd[2] >> 8) + ntohs(packetHeaderRecd[3]);
 
 		cout <<  "Packet " << packetSequenceNumber << "received with" << packetCount << "data bytes";
 
 
 		dataBytesRecd = recv(sock_client, dataBytes, STRING_SIZE, 0);
+	// TODO error checking
 
-
-		ofstream out ("out.txt");
-		out.open("out.txt", ios::app);
-		out << dataBytes << endl;
-		out.close();
+		ofstream out ("out.txt");      // maybe this
+		out.open("out.txt", ios::app); // and this should be before the while loop?
+		out << dataBytes << endl; 
+		out.close(); // maybe this should be after of the while loop?
 
 
 		cout << "The response from server is:" << endl;
@@ -134,19 +138,14 @@ int main(void) {
 
 		totalPacketsRecd++;
 		totalDataBytesReceived = totalDataBytesReceived + packetCount;
-		}
+	        totalPacketsRecd = totalPacketsRecd + 1;        // for termination packet
 
-		totalPacketsRecd = totalPacketsRecd + 1; 	// for termination packet
+	}
 
-		cout << "End of Transmission Packet with sequence number " << packetSequenceNumber
-				<< "received with " << packetCount << "data bytes";
-
-
+	cout << "End of Transmission Packet with sequence number " << packetSequenceNumber << "received with " << packetCount << "data bytes";
 
 	//close the socket
 
 	close(sock_client);
-
-
 
 }
