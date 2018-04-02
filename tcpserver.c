@@ -40,7 +40,8 @@ int main(void) {
    unsigned int msg_len;  /* length of message */
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
    unsigned int i;  /* temporary loop variable */
-   
+   short net_number; // for use with htons
+ 
    FILE * fp;
    char * line = NULL;
    size_t len = 0;
