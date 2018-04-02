@@ -108,12 +108,12 @@ int main(void) {
 
       // error checking as recommended by Adarsh Sethi
       if (bytes_recd < 0) {
-         perror("Recv error. Good luck with that...");
+         perror("Recv error. Good luck with that...\n");
          close(sock_server);
          exit(1);
 
       } else if (bytes_recd == 0) {
-         perror("Recv got end-of-file return");
+         perror("Recv got end-of-file return\n");
          close(sock_server);
          exit(1);
 
@@ -149,15 +149,30 @@ int main(void) {
  	     msg_len = strlen(line);                 
 
 	// header 1: packet sequence number
-            send_message[0] = htons(packet_count >> 8); //Most significant byte
-            send_message[1] = htons(packet_count & 0x00FF); //Least significant byte
+            net_number = htons(packet_count);
+            send_message[0] = net_number >> 8; //Most significant byte
+            send_message[1] = net_number & 0x00FF; //Least significant byte
 
 	// header 2: data size
-            send_message[2] = htons(strlen(line) >> 8); //Most significant byte
-            send_message[3] = htons(strlen(line) & 0x00FF); //Least significant pyte
+            net_number = htons(strlen(line));
+            send_message[2] = net_number >> 8; //Most significant byte
+            send_message[3] = net_number & 0x00FF; //Least significant pyte
 
 	// send headers
             bytes_sent = send(sock_connection, send_message, msg_len, 0);
+
+	// error checking
+            if (bytes_sent < 0) {
+               perror("Send error, trying again... ");
+               bytes_sent = send(sock_connection, send_message, msg_len, 0);
+               if (bytes_sent < 0)
+                  perror("Resend failed, giving up.\n");
+               else perror("Resend successful. Party on.\n");
+            } else {
+               printf("Send message is:\n");
+               printf("%s", send_message);
+               printf("\nwith length %d\n\n", bytes_sent);
+            }
 
 	// housekeeping: clean up send_message
             memset(send_message, 0, sizeof(send_message));
@@ -168,6 +183,20 @@ int main(void) {
 
          /* send data */ 
             bytes_sent = send(sock_connection, send_message, msg_len, 0);
+
+        // error checking
+            if (bytes_sent < 0) {
+               perror("Send error, trying again... ");
+               bytes_sent = send(sock_connection, send_message, msg_len, 0);
+               if (bytes_sent < 0)
+                  perror("Resend failed, giving up.\n");
+               else perror("Resend successful. Party on.\n");
+            } else {
+               printf("Send message is:\n");
+               printf("%s", send_message);
+               printf("\nwith length %d\n\n", bytes_sent);
+            }
+
 
         // housekeeping: clean up send_message
             memset(send_message, 0, sizeof(send_message));
@@ -181,6 +210,19 @@ int main(void) {
 
 	// send end-of-transmission packet: 4 bytes of all zeros
          bytes_sent = send(sock_connection, 0x00000000, 4, 0);
+
+        // error checking
+         if (bytes_sent < 0) {
+            perror("Send error, trying again... ");
+            bytes_sent = send(sock_connection, send_message, msg_len, 0);
+            if (bytes_sent < 0)
+               perror("Resend failed, giving up.\n");
+            else perror("Resend successful. Party on.\n");
+         } else {
+            printf("Send message is:\n");
+            printf("%s", send_message);
+            printf("\nwith length %d\n\n", bytes_sent);
+         }
 
       }
 
