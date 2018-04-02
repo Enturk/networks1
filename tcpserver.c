@@ -50,7 +50,8 @@ int main(void) {
    ssize_t read;
    char file_name[0x100];
    short packet_count = 1;
-   short data_start = 4;
+   short data_start = 0;
+   int filename_size; // to store file name length
    
    char debug = 1; // debugging variable, TODO set to 0 when done
 
@@ -105,8 +106,31 @@ int main(void) {
 //         exit(1);
       }
  
-      /* receive the message */
+      /* receive the header */
+      bytes_recd = recv(sock_connection, rec_message, STRING_SIZE, 0);
+      // error checking as recommended by Adarsh Sethi
+      if (bytes_recd < 0) {
+         perror("Recv error. Good luck with that...\n");
+         close(sock_server);
+         exit(1);
 
+      } else if (bytes_recd == 0) {
+         perror("Recv got end-of-file return\n");
+         close(sock_server);
+         exit(1);
+
+      } else { // bytes_recd > 0
+         if (debug == 1) {
+            printf("Received Sentence is:\n");
+            printf("%s", rec_message);
+            printf("\nwith length %d\n\n", bytes_recd);
+         }
+
+        /* get filename size */
+        filname_size = ntohs(rec_message[2]<<8 + rec_message[3]);
+      }
+
+      // receive filename
       bytes_recd = recv(sock_connection, rec_message, STRING_SIZE, 0);
 
       // error checking as recommended by Adarsh Sethi
@@ -128,8 +152,8 @@ int main(void) {
          }
 
         /* get filename */
-        for (i=data_start; i<sizeof(rec_message); i++)
-           file_name[i-data_start] = rec_message[i];
+        for (i=0; i<filename_size+1; i++)
+           file_name[i] = rec_message[i];
         i=0; // reset i to be environmentally friendly
         if (debug == 1)
            printf("Requsted file is %s\n", file_name);
