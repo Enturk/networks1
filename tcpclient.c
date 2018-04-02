@@ -1,10 +1,11 @@
+
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <netdb.h>
-//#include <sys/socket.h>
-//#include <netinet/in.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <iostream>
 #include <winsock.h>
@@ -25,8 +26,13 @@ int main(void) {
 
 	unsigned short server_port = 45054;				//port number used by server (remote port)
 
-	//char modifiedSentence[STRING_SIZE];		// send message
+	char packetRecd[STRING_SIZE];		// recieved packet
 
+	//int packetHeaderRecdCount = 1;		//count of data bytes in packet
+
+	int packetCount = 1;				//count of data bytes in packet
+
+	int packetSequenceNumber = 0;		//sequence number of packet
 
 	unsigned int name_len;					//length of file name
 
@@ -41,11 +47,10 @@ int main(void) {
 	struct packetHeader {
 		int sequenceNumber;
 		int count;
-		//char dataBytes[STRING_SIZE];
 	};
 
 	char dataBytes[STRING_SIZE];
-	packetHeader packetHeaderRecd;
+	char packetHeaderRecd[STRING_SIZE];
 
 	int headerBytesRecd;
 	int dataBytesRecd;
@@ -103,31 +108,38 @@ int main(void) {
 
 	// get response from server
 
-	while(packetHeaderRecd.count != 0) {
-	dataBytesRecd = recv(sock_client, dataBytes, STRING_SIZE, 0);
-	headerBytesRecd = recv(sock_client, &packetHeaderRecd, sizeof(packetHeader), 0);
-
-	cout <<  "Packet " << packetHeaderRecd.sequenceNumber <<
-			"received with" << packetHeaderRecd.count << "data bytes";
 
 
-	ofstream out ("out.txt");
-	out.open("out.txt", ios::ate);
-	out << dataBytes << endl;
-	out.close();
-	//cin >> packetRecd.dataBytes;
+	while(packetCount != 0) {															//ntohs send_message[0] >> 8
+																						//ntohs send_message[1]
+		headerBytesRecd = recv(sock_client, packetHeaderRecd , STRING_SIZE, 0);
 
-	cout << "The response from server is:" << endl;
-	cout << dataBytesRecd;
+		packetCount = ntohs(packetHeaderRecd[0] >> 8) + ntohs(packetHeaderRecd[1]);
+		packetSequenceNumber = ntohs(packetHeaderRecd[2] >> 8) + ntohs(packetHeaderRecd[1]);
 
-	totalPacketsRecd++;
-	totalDataBytesReceived = totalDataBytesReceived + packetHeaderRecd.count;
-	}
+		cout <<  "Packet " << packetSequenceNumber << "received with" << packetCount << "data bytes";
 
-	totalPacketsRecd = totalPacketsRecd + 1; 	// for termination packet
 
-	cout << "End of Transmission Packet with sequence number " << packetHeaderRecd.sequenceNumber
-			<< "received with " << packetHeaderRecd.count << "data bytes";
+		dataBytesRecd = recv(sock_client, dataBytes, STRING_SIZE, 0);
+
+
+		ofstream out ("out.txt");
+		out.open("out.txt", ios::app);
+		out << dataBytes << endl;
+		out.close();
+
+
+		cout << "The response from server is:" << endl;
+		cout << dataBytes;
+
+		totalPacketsRecd++;
+		totalDataBytesReceived = totalDataBytesReceived + packetCount;
+		}
+
+		totalPacketsRecd = totalPacketsRecd + 1; 	// for termination packet
+
+		cout << "End of Transmission Packet with sequence number " << packetSequenceNumber
+				<< "received with " << packetCount << "data bytes";
 
 
 
