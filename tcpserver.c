@@ -19,12 +19,6 @@
 #define SERV_TCP_PORT 45054
 #define _GNU_SOURCE
 
-// from https://stackoverflow.com/questions/17768625/2-chars-to-short-in-c
-unsigned short getShort(unsigned char* array, int offset)
-{
-    return (short)(((short)array[offset]) << 8) | array[offset + 1];
-}
-
 int main(void) {
 
    int sock_server;  /* Socket on which server listens to clients */
@@ -52,7 +46,7 @@ int main(void) {
    size_t len = 0;
    ssize_t read;
    char file_name[0x100];
-   short packet_count = 0;
+   short packet_count = 1;
    short data_start = 4;
    
    char debug = 1; // debugging variable, TODO set to 0 when done
@@ -112,7 +106,18 @@ int main(void) {
 
       bytes_recd = recv(sock_connection, rec_message, STRING_SIZE, 0);
 
-      if (bytes_recd > 0) {
+      // error checking as recommended by Adarsh Sethi
+      if (bytes_rec < 0) {
+         perror("Recv error. Good luck with that...");
+         close(sock_server);
+         exit(1);
+
+      } else if (bytes_rec == 0) {
+         perror("Recv got end-of-file return");
+         close(sock_server);
+         exit(1);
+
+      } else { // bytes_rec > 0
          if (debug == 1) {
             printf("Received Sentence is:\n");
             printf("%s", rec_message);
@@ -144,12 +149,12 @@ int main(void) {
  	     msg_len = strlen(line);                 
 
 	// header 1: packet sequence number
-            send_message[0] = packet_count >> 8; //Most significant byte
-            send_message[1] = packet_count & 0x00FF; //Least significant byte
+            send_message[0] = htons(packet_count >> 8); //Most significant byte
+            send_message[1] = htons(packet_count & 0x00FF); //Least significant byte
 
 	// header 2: data size
-            send_message[2] = strlen(line) >> 8; //Most significant byte
-            send_message[3] = strlen(line) & 0x00FF; //Least significant pyte
+            send_message[2] = htons(strlen(line) >> 8); //Most significant byte
+            send_message[3] = htons(strlen(line) & 0x00FF); //Least significant pyte
 
 	// send headers
             bytes_sent = send(sock_connection, send_message, msg_len, 0);
@@ -173,10 +178,14 @@ int main(void) {
          fclose(fp);
          if (line)
             free(line);
+
+	// send end-of-transmission packet: 4 bytes of all zeros
+         bytes_sent = send(soc_connection, 0x00000000, 4, 0);
+
       }
 
       /* close the socket */
-
       close(sock_connection);
+
    } 
 }
