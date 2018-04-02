@@ -221,12 +221,12 @@ int main(void) {
             free(line);
 
 	// send end-of-transmission packet: 4 bytes of all zeros
-         bytes_sent = send(sock_connection, SIXTEEN_ZEROS, sizeof(SIXTEEN_ZEROS), 0);
+         bytes_sent = send(sock_connection, htonl(SIXTEEN_ZEROS), sizeof(SIXTEEN_ZEROS), 0);
 
         // error checking
          if (bytes_sent < 0) {
             perror("Send error, trying again... ");
-            bytes_sent = send(sock_connection, SIXTEEN_ZEROS, sizeof(SIXTEEN_ZEROS), 0);
+            bytes_sent = send(sock_connection, htonl(SIXTEEN_ZEROS), sizeof(SIXTEEN_ZEROS), 0);
             if (bytes_sent < 0)
                perror("Resend failed, giving up.\n");
             else {
