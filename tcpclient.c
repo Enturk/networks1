@@ -152,11 +152,15 @@ int main(void) {
    timeinfo = localtime(&rawtime);
    fprintf(pFile,"\n\n\nOUTPUT DATE & TIME: %s\n\n", asctime(timeinfo) );
 
+   if (debug == 1) printf("Reception header struct sequence is %d before while loop.\n", catchFileHeader.sequenceNumber);
+
    while (catchFileHeader.sequenceNumber != 0){
 
-	//TODO use net-to-host conversion?
+	//FIXME use net-to-host conversion - problem may be in server...
       /* get header response from server */  
       bytes_recd = recv(sock_client, &catchFileHeader, sizeof(catchFileHeader), 0); 
+      catchFileHeader.count = ntohl(catchFileHeader.count);
+      catchFileHeader.sequenceNumber = ntohl(catchFileHeader.sequenceNumber);
       msg_len=catchFileHeader.count;
 
 	// error checking
