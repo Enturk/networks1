@@ -98,7 +98,7 @@ int main(void) {
    // prep header
    struct packetHeader fileRequestHeader; 
    fileRequestHeader.sequenceNumber = 0;
-   fileRequestHeader.count = sizeof(sentence);
+   fileRequestHeader.count = msg_len;
    
    /* send header */
    bytes_sent = send(sock_client, &fileRequestHeader, sizeof(fileRequestHeader), 0); // Sethi trick
