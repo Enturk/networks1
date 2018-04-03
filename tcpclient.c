@@ -37,6 +37,8 @@ int main(void) {
       int count;
    };
 
+   int i; // for the for loop
+
    int dataSize = 0; // for end-of-transmission report
    int packetQty = 0; 
 
@@ -181,7 +183,7 @@ int main(void) {
 	// error checking
       if (bytes_recd < 0) {
          perror("Data Recv error. Good luck with that...\n");
-         close(sock_server);
+         close(sock_client);
          exit(1);
 
       } else if (bytes_recd == 0) {
@@ -196,11 +198,11 @@ int main(void) {
       }
 
 	// append data to file
-      for (i=0; i<msglen; i++) {
+      for (i=0; i<msg_len; i++) {
         fprintf(pFile, "%s", receivedSentence[i]);
       }
 	// add end of line
-      fprintf(pFile, "\n")
+      fprintf(pFile, "\n");
 
       if (debug == 1)
          printf("Appended this line to file:\n%s\n", receivedSentence);
