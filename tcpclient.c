@@ -150,17 +150,16 @@ int main(void) {
       exit(1); 
    }
    timeinfo = localtime(&rawtime);
-   fprintf(pFile,"\n\n\nOUTPUT DATE & TIME: %s\n\n", asctime(timeinfo) );
+   fprintf(pFile,"\n\n\nOUTPUT OF FILE %s AT DATE & TIME: %s\n\n", sentence, asctime(timeinfo) );
 
-   if (debug == 1) printf("Reception header struct sequence is %d before while loop.\n", catchFileHeader.sequenceNumber);
+   if (debug == 1) printf("Reception header struct sequence is %d at packet number %d before while loop.\n", catchFileHeader.sequenceNumber, packetQty);
 
    while (catchFileHeader.sequenceNumber != 0){
-
-	//FIXME use net-to-host conversion - problem may be in server...
+//FIXME none of this loop seems to be running but it does loop (packetQty increments)
       /* get header response from server */  
       bytes_recd = recv(sock_client, &catchFileHeader, sizeof(catchFileHeader), 0); 
-      catchFileHeader.count = ntohl(catchFileHeader.count);
-      catchFileHeader.sequenceNumber = ntohl(catchFileHeader.sequenceNumber);
+      catchFileHeader.count = ntohs(catchFileHeader.count);
+      catchFileHeader.sequenceNumber = ntohs(catchFileHeader.sequenceNumber);
       msg_len=catchFileHeader.count;
 
 	// error checking

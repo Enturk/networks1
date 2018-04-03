@@ -172,14 +172,17 @@ int main(void) {
             exit(1);
          }
 
-        /* make header */
+         // file transmission loop
          while ((read = getline(&line, &len, fp)) != -1) {
-             //maybe break line into multiple messages if line is too long
-             if (strlen(line)>STRING_SIZE) {
-                perror("Next line in file is too long and will be skipped.\n");
-                continue;
-             }
- 	     msg_len = strlen(line);                 
+
+            //maybe break line into multiple messages if line is too long
+            if (strlen(line)>STRING_SIZE) {
+               perror("Next line in file is too long and will be skipped.\n");
+               continue;
+            } else if (debug == 1) 
+               printf("Next line of file is: \n%s\n", line);
+
+	    msg_len = strlen(line);                 
 
 	// header 1: packet sequence number
             net_number = htons(packet_count);
@@ -233,7 +236,8 @@ int main(void) {
                }
             } else {
                printf("Packet %d transmitted ", packet_count);
-               printf("with %d data bytes\n", bytes_sent);
+               printf("with %d data bytes. Line was:\n", bytes_sent);
+               printf("%s\n", send_message);
                total_data += bytes_sent;
             }
 
@@ -247,6 +251,7 @@ int main(void) {
          if (line)
             free(line);
 
+	// FIXME Bad address happens on this transmission
 	// send end-of-transmission packet: 4 bytes of all zeros
          bytes_sent = send(sock_connection, htonl(THIRTYTWO_ZEROS), sizeof(THIRTYTWO_ZEROS), 0);
 
