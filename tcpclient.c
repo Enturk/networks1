@@ -156,6 +156,8 @@ int main(void) {
 
    while (catchFileHeader.sequenceNumber != 0){
 //FIXME none of this loop seems to be running but it does loop (packetQty increments)
+     if (debug == 1) printf("In file reception while loop\n");
+
       /* get header response from server */  
       bytes_recd = recv(sock_client, &catchFileHeader, sizeof(catchFileHeader), 0); 
       catchFileHeader.count = ntohs(catchFileHeader.count);
@@ -202,7 +204,7 @@ int main(void) {
 
 	// append data to file
       for (i=0; i<msg_len; i++) {
-        fprintf(pFile, "%s", receivedSentence[i]);
+        fprintf(pFile, "%c", receivedSentence[i]);
       }
 	// add end of line
       fprintf(pFile, "\n");

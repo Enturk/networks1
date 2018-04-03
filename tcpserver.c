@@ -45,6 +45,11 @@ int main(void) {
    short HEADER_SIZE = sizeof(int)*2;
    unsigned int total_data = 0; // to produce the end-of-run statistic
 
+   struct packetHeader { // to use with pointers when receiving headers
+      int sequenceNumber;
+      int count;
+   };
+
    FILE * fp;
    char * line = NULL;
    size_t len = 0;
@@ -106,9 +111,13 @@ int main(void) {
 //         close(sock_server);
 //         exit(1);
       }
- 
+      // prep Filename receipt header
+      struct packetHeader fileNameHeader;
+      fileNameHeader.sequenceNumber = 0;
+      fileNameHeader.count = 0;
+
       /* receive the header */
-      bytes_recd = recv(sock_connection, rec_message, HEADER_SIZE, 0);
+      bytes_recd = recv(sock_connection, &fileNameHeader, sizeof(fileNameHeader), 0);
       // error checking as recommended by Adarsh Sethi
       if (bytes_recd < 0) {
          perror("Filename header recv error. Good luck with that...\n");
@@ -121,14 +130,13 @@ int main(void) {
          exit(1);
 
       } else { // bytes_recd > 0
-         if (debug == 1) {
-            printf("Received filename header message is:\n");
-            printf("%s", rec_message);
-            printf("\nwith length %d\n\n", bytes_recd);
-         }
+         /* get filename size */
+         filename_size = ntohs(fileNameHeader.count);
 
-        /* get filename size */
-        filename_size = ntohl(rec_message[2]<<8 + rec_message[3]);
+         if (debug == 1) {
+            printf("Received header packet for filename request ");
+            printf("\nwith length %d\n\n", filename_size);
+         }
       }
 
       // receive filename
@@ -164,7 +172,7 @@ int main(void) {
         if (debug == 1)
            printf("Requsted file is %s\n", file_name);
 
-        /* prepare the message to send */
+        /* open the file to send */
          fp = fopen(file_name, "r");
          if (fp == NULL) {
             perror("No file of requested name, hanging up on client.\n" );
@@ -172,8 +180,14 @@ int main(void) {
             exit(1);
          }
 
+         // prep header
+         struct packetHeader fileSendHeader;
+         fileSendHeader.sequenceNumber = packet_count;
+         fileSendHeader.count = msg_len;
+
+
          // file transmission loop
-         while ((read = getline(&line, &len, fp)) != -1) {
+         while ((read = getline(&line, &len, fp)) > 0) {
 
             //maybe break line into multiple messages if line is too long
             if (strlen(line)>STRING_SIZE) {
@@ -184,18 +198,21 @@ int main(void) {
 
 	    msg_len = strlen(line);                 
 
-	// header 1: packet sequence number
+            // header 1
+            fileSendHeader.sequenceNumber = htons(packet_count);
+            fileSendHeader.count = htons(msg_len);
+
+/* removing this in the hopes that it was the problem...
             net_number = htons(packet_count);
             send_message[0] = net_number >> 8; //Most significant byte
             send_message[1] = net_number & 0x00FF; //Least significant byte
 
-	// header 2: data size
             net_number = htons(strlen(line));
             send_message[2] = net_number >> 8; //Most significant byte
             send_message[3] = net_number & 0x00FF; //Least significant pyte
-
+*/
 	// send headers
-            bytes_sent = send(sock_connection, send_message, msg_len, 0);
+            bytes_sent = send(sock_connection, &fileSendHeader, sizeof(fileSendHeader), 0);
 
 	// error checking
             if (bytes_sent < 0) {
@@ -215,9 +232,9 @@ int main(void) {
             memset(send_message, 0, sizeof(send_message));
 
 	// packet data
+            msg_len = strlen(line);
             for (i=0; i<msg_len; i++)
                send_message[i] = line[i];
-            msg_len = sizeof(send_message);
 
          /* send data */ 
             bytes_sent = send(sock_connection, send_message, msg_len, 0);
@@ -251,26 +268,31 @@ int main(void) {
          if (line)
             free(line);
 
-	// FIXME Bad address happens on this transmission
+	// FIXME Bad address happens on this final transmission
+
+	// end-of-transmission header
+         fileSendHeader.sequenceNumber = htons(0);
+         fileSendHeader.count = htons(0);
+
+
 	// send end-of-transmission packet: 4 bytes of all zeros
-         bytes_sent = send(sock_connection, htonl(THIRTYTWO_ZEROS), sizeof(THIRTYTWO_ZEROS), 0);
+         bytes_sent = send(sock_connection, &fileSendHeader, sizeof(fileSendHeader), 0);
 
         // error checking
          if (bytes_sent < 0) {
             perror("End-of-transmission send error, trying again... ");
-            bytes_sent = send(sock_connection, htonl(THIRTYTWO_ZEROS), sizeof(THIRTYTWO_ZEROS), 0);
+            bytes_sent = send(sock_connection, &fileSendHeader, sizeof(fileSendHeader), 0);
             if (bytes_sent < 0)
                perror("Resend failed, giving up.\n");
             else {
                printf("Resend successful. Party on.\n");
-               printf("End of Transmission Packet with sequence number %d transmitted ", THIRTYTWO_ZEROS);
+               printf("End of Transmission Packet with sequence number %d transmitted ", fileSendHeader.sequenceNumber);
                printf("with 0 data bytes\n\n");
             }
          } else {
-            printf("End of Transmission Packet with sequence number %d transmitted ", THIRTYTWO_ZEROS);
+            printf("End of Transmission Packet with sequence number %d transmitted ", fileSendHeader.sequenceNumber);
             printf("with 0 data bytes\n\n");
          }
-
       }
 
       /* close the socket */
