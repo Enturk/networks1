@@ -127,7 +127,7 @@ int main(void) {
          }
 
         /* get filename size */
-        filname_size = ntohs(rec_message[2]<<8 + rec_message[3]);
+        filename_size = ntohs(rec_message[2]<<8 + rec_message[3]);
       }
 
       // receive filename
