@@ -10,7 +10,7 @@
 #include <netinet/in.h>     /* for sockaddr_in */
 #include <unistd.h>         /* for close */
 
-#define STRING_SIZE 1024   
+#define STRING_SIZE 80 
 
 /* SERV_TCP_PORT is the port number on which the server listens for
    incoming requests from clients. You should change this to a different
@@ -42,6 +42,7 @@ int main(void) {
    unsigned int i;  /* temporary loop variable */
    short net_number; // for use with htons
    long THIRTYTWO_ZEROS = 0x00000000; // for end-of-transmission packet header legibility
+   short HEADER_SIZE = sizeof(int)*2;
    unsigned int total_data = 0; // to produce the end-of-run statistic
 
    FILE * fp;
@@ -107,21 +108,21 @@ int main(void) {
       }
  
       /* receive the header */
-      bytes_recd = recv(sock_connection, rec_message, STRING_SIZE, 0);
+      bytes_recd = recv(sock_connection, rec_message, HEADER_SIZE, 0);
       // error checking as recommended by Adarsh Sethi
       if (bytes_recd < 0) {
-         perror("Recv error. Good luck with that...\n");
+         perror("Filename header recv error. Good luck with that...\n");
          close(sock_server);
          exit(1);
 
       } else if (bytes_recd == 0) {
-         perror("Recv got end-of-file return\n");
+         perror("Filename header recv got end-of-file return\n");
          close(sock_server);
          exit(1);
 
       } else { // bytes_recd > 0
          if (debug == 1) {
-            printf("Received Sentence is:\n");
+            printf("Received filename header message is:\n");
             printf("%s", rec_message);
             printf("\nwith length %d\n\n", bytes_recd);
          }
@@ -135,18 +136,18 @@ int main(void) {
 
       // error checking as recommended by Adarsh Sethi
       if (bytes_recd < 0) {
-         perror("Recv error. Good luck with that...\n");
+         perror("Filename data recv error. Good luck with that...\n");
          close(sock_server);
          exit(1);
 
       } else if (bytes_recd == 0) {
-         perror("Recv got end-of-file return\n");
+         perror("Filename data recv got end-of-file return\n");
          close(sock_server);
          exit(1);
 
       } else { // bytes_recd > 0
          if (debug == 1) {
-            printf("Received Sentence is:\n");
+            printf("Received Filename sentence is:\n");
             printf("%s", rec_message);
             printf("\nwith length %d\n\n", bytes_recd);
          }
@@ -170,7 +171,7 @@ int main(void) {
          while ((read = getline(&line, &len, fp)) != -1) {
              //maybe break line into multiple messages if line is too long
              if (strlen(line)>STRING_SIZE) {
-                perror("Next line is too long and will be skipped.\n");
+                perror("Next line in file is too long and will be skipped.\n");
                 continue;
              }
  	     msg_len = strlen(line);                 
@@ -190,7 +191,7 @@ int main(void) {
 
 	// error checking
             if (bytes_sent < 0) {
-               perror("Send error, trying again... ");
+               perror("Header send error, trying again... ");
                bytes_sent = send(sock_connection, send_message, msg_len, 0);
                if (bytes_sent < 0)
                   perror("Resend failed, giving up.\n");
@@ -198,7 +199,7 @@ int main(void) {
                   printf("Resend successful. Party on.\n");
                }
             } else if (debug == 1) {
-               printf("Header packet for %d transmitted ", packet_count);
+               printf("Header packet number %d transmitted ", packet_count);
                printf("with %d data bytes\n", bytes_sent);
             }
 
@@ -215,7 +216,7 @@ int main(void) {
 
         // error checking
             if (bytes_sent < 0) {
-               perror("Send error, trying again... ");
+               perror("Data send error, trying again... ");
                bytes_sent = send(sock_connection, send_message, msg_len, 0);
                if (bytes_sent < 0)
                   perror("Resend failed, giving up.\n");
@@ -246,7 +247,7 @@ int main(void) {
 
         // error checking
          if (bytes_sent < 0) {
-            perror("Send error, trying again... ");
+            perror("End-of-transmission send error, trying again... ");
             bytes_sent = send(sock_connection, htonl(THIRTYTWO_ZEROS), sizeof(THIRTYTWO_ZEROS), 0);
             if (bytes_sent < 0)
                perror("Resend failed, giving up.\n");

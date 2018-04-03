@@ -1,6 +1,6 @@
 /* tcp_ client.c */ 
-/* Programmed by Adarsh Sethi */
-/* February 21, 2018 */     
+/* Programmed by Adarsh Sethi & Nazim Karaca*/
+/* February 21, 2018 & April 2, 2018*/     
 
 #include <stdio.h>          /* for standard I/O functions */
 #include <stdlib.h>         /* for exit */
@@ -188,7 +188,7 @@ int main(void) {
 
       } else if (bytes_recd == 0) {
          perror("Data recv got end-of-file return\n");
-         close(sock_server);
+         close(sock_client);
          exit(1);
 
       } else { // bytes_recd > 0
