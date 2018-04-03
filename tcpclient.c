@@ -154,7 +154,7 @@ int main(void) {
 
    while (catchFileHeader.sequenceNumber != 0){
 
-	//iODO use net-to-host conversion?
+	//TODO use net-to-host conversion?
       /* get header response from server */  
       bytes_recd = recv(sock_client, &catchFileHeader, sizeof(catchFileHeader), 0); 
       msg_len=catchFileHeader.count;

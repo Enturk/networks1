@@ -153,13 +153,14 @@ int main(void) {
          }
 
         /* get filename */
+        strncpy(file_name, rec_message, 100); // this works
+
+	/* // this wasn't working
         for (i=0; i<(filename_size+1); i++) {
            file_name[i] = rec_message[i];
-        }
-        if (debug == 1) file_name = "test1.txt"; // having trouble getting the filename to be more than "t"
-
+        } 
         i=0; // reset i to be environmentally friendly
-
+        */
         if (debug == 1)
            printf("Requsted file is %s\n", file_name);
 
