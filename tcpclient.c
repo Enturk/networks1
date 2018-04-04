@@ -31,7 +31,7 @@ int main(void) {
  
    char packetRecd[STRING_SIZE];	// recieved packet
  
-   short debug = 0; // TODO change to 0 when done
+   short debug = 1; // TODO change to 0 when done
    struct packetHeader { // to use with pointers when receiving headers
       int sequenceNumber;
       int count;
@@ -149,8 +149,10 @@ int main(void) {
       close(sock_client);
       exit(1); 
    }
-   timeinfo = localtime(&rawtime);
-   fprintf(pFile,"\n\n\nOUTPUT OF FILE %s AT DATE & TIME: %s\n\n", sentence, asctime(timeinfo) );
+   if (debug == 1) {
+      timeinfo = localtime(&rawtime);
+      fprintf(pFile,"\n\n\nOUTPUT OF FILE %s AT DATE & TIME: %s\n\n", sentence, asctime(timeinfo) );
+   }
 
    if (debug == 1) printf("Reception header struct sequence is %d at packet number %d before while loop.\n", catchFileHeader.sequenceNumber, packetQty);
 

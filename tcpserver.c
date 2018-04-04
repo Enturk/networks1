@@ -59,7 +59,7 @@ int main(void) {
    short data_start = 0;
    int filename_size; // to store file name length
    
-   char debug = 0; // debugging variable, TODO set to 0 when done
+   char debug = 1; // debugging variable, TODO set to 0 when done
 
    /* open a socket */
 
@@ -286,10 +286,12 @@ int main(void) {
                printf("Resend successful. Party on.\n");
                printf("End of Transmission Packet with sequence number %d transmitted ", fileSendHeader.sequenceNumber);
                printf("with 0 data bytes\n\n");
+               break;
             }
          } else {
             printf("End of Transmission Packet with sequence number %d transmitted ", fileSendHeader.sequenceNumber);
             printf("with 0 data bytes\n\n");
+            break;
          }
       }
 
@@ -301,5 +303,5 @@ int main(void) {
    // end of program statistics
    printf("Number of data packets transmitted: %d\n", packet_count);
    printf("Total number of data bytes transmitted: %d\n", total_data);
-   //break;
+   exit(1);
 }
