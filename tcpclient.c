@@ -31,7 +31,7 @@ int main(void) {
  
    char packetRecd[STRING_SIZE];	// recieved packet
  
-   short debug = 1; // TODO change to 0 when done
+   short debug = 0; // TODO change to 0 when done
    struct packetHeader { // to use with pointers when receiving headers
       int sequenceNumber;
       int count;
@@ -178,7 +178,7 @@ int main(void) {
       } else { // bytes_recd > 0
          if (debug == 1) {
             printf("Received header packet number field is: %d\n", catchFileHeader.sequenceNumber);
-            printf("Received header data count field is: %d\n\n", msg_len);
+            printf("Received header data count field is: %d\n\n", catchFileHeader.count);
          }
       }         
 
@@ -198,7 +198,7 @@ int main(void) {
 
       } else { // bytes_recd > 0
          if (debug == 1) {
-            printf("Received data with line: \n%s\n", receivedSentence);
+            printf("Received data with line: \n%s", receivedSentence);
          }
       }
 
@@ -206,8 +206,8 @@ int main(void) {
       for (i=0; i<msg_len; i++) {
         fprintf(pFile, "%c", receivedSentence[i]);
       }
-	// add end of line
-      fprintf(pFile, "\n");
+	// add end of line UNNECESSARY
+//      fprintf(pFile, "\n");
 
       if (debug == 1)
          printf("Appended this line to file:\n%s\n", receivedSentence);
