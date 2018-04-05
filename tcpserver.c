@@ -59,7 +59,7 @@ int main(void) {
    short data_start = 0;
    int filename_size; // to store file name length
    
-   char debug = 1; // debugging variable, TODO set to 0 when done
+   char debug = 0; // debugging variable, TODO set to 0 when done
 
    /* open a socket */
 

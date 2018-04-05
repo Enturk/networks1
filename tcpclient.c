@@ -31,7 +31,7 @@ int main(void) {
  
    char packetRecd[STRING_SIZE];	// recieved packet
  
-   short debug = 1; // TODO change to 0 when done
+   short debug = 0; // TODO change to 0 when done
    struct packetHeader { // to use with pointers when receiving headers
       int sequenceNumber;
       int count;
@@ -159,7 +159,6 @@ int main(void) {
    while (catchFileHeader.sequenceNumber != 0){
 //FIXME none of this loop seems to be running but it does loop (packetQty increments)
      if (debug == 1) printf("In file reception while loop\n");
-
       /* get header response from server */  
       bytes_recd = recv(sock_client, &catchFileHeader, sizeof(catchFileHeader), 0); 
       catchFileHeader.count = ntohs(catchFileHeader.count);
@@ -174,18 +173,18 @@ int main(void) {
 
       } else if (bytes_recd == 0) {
          perror("Header recv got end-of-file return\n");
-         close(sock_client);
-         exit(1);
+        // close(sock_client);
+        //  exit(1);
 
       } else { // bytes_recd > 0
          if (debug == 1) {
             printf("Received header packet number field is: %d\n", catchFileHeader.sequenceNumber);
-            printf("Received header data count field is: %d\n\n", catchFileHeader.count);
+            printf("Received header data count field is: %d\n\n", msg_len);
          }
       }         
 
 	// receive data from server
-      bytes_recd = recv(sock_client, receivedSentence, STRING_SIZE, 0);
+      bytes_recd = recv(sock_client, receivedSentence, msg_len, 0);
 
 	// error checking
       if (bytes_recd < 0) {
@@ -195,8 +194,6 @@ int main(void) {
 
       } else if (bytes_recd == 0) {
          perror("Data recv got end-of-file return\n");
-         close(sock_client);
-         exit(1);
 
       } else { // bytes_recd > 0
          if (debug == 1) {
@@ -205,8 +202,14 @@ int main(void) {
       }
 
 	// append data to file
+      if (debug == 1) // for debug
+         printf("Appended this line to file:\n");
       for (i=0; i<msg_len; i++) {
         fprintf(pFile, "%c", receivedSentence[i]);
+	// debug pring here
+        if (debug == 1)
+           printf("%c", receivedSentence[i]);
+
       }
 	// add end of line UNNECESSARY
 //      fprintf(pFile, "\n");
