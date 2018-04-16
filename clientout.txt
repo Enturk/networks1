@@ -1,0 +1,28 @@
+Please type a filename (including the extension such as .txt or .c):
+test1.txtpacket 1 is received with 58 bytes
+packet 2 is received with 64 bytes
+packet 3 is received with 57 bytes
+packet 4 is received with 28 bytes
+packet 5 is received with 57 bytes
+packet 6 is received with 63 bytes
+packet 7 is received with 50 bytes
+packet 8 is received with 58 bytes
+packet 9 is received with 55 bytes
+packet 10 is received with 19 bytes
+packet 11 is received with 1 bytes
+packet 12 is received with 80 bytes
+packet 13 is received with 1 bytes
+packet 14 is received with 50 bytes
+packet 15 is received with 47 bytes
+packet 16 is received with 35 bytes
+packet 17 is received with 75 bytes
+packet 18 is received with 80 bytes
+packet 19 is received with 80 bytes
+packet 20 is received with 80 bytes
+packet 21 is received with 32 bytes
+packet 22 is received with 53 bytes
+packet 23 is received with 36 bytes
+packet 0 is received with 0 bytes
+End of Transmission Packet with sequence number 23 received with 0 data bytes
+Number of data packets received: 23
+Total number of data bytes received 1159

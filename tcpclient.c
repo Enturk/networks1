@@ -25,7 +25,7 @@ int main(void) {
    char server_hostname[STRING_SIZE] = "cisc450.cis.udel.edu"; /* Server's hostname */
    unsigned short server_port = 45054;  /* Port number used by server (remote port) */
 
-   char sentence[STRING_SIZE];  /* send message */
+   char sentence[STRING_SIZE]="test1.txt";  /* send message TODO initialized only for output capture */ 
    char receivedSentence[STRING_SIZE]; /* receive message */
    unsigned int msg_len;  /* length of message */
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
@@ -93,7 +93,8 @@ int main(void) {
    /* user interface */
 
    printf("Please type a filename (including the extension such as .txt or .c):\n");
-   scanf("%s", sentence);
+   //scanf("%s", sentence); //TODO filname hardcoded above to produce output script
+   printf("test1.txt"); // TODO either comment out this line or the prior one
    msg_len = strlen(sentence) + 1;
 
    // prep header
@@ -158,7 +159,6 @@ int main(void) {
    if (debug == 1) printf("Reception header struct sequence is %d at packet number %d before while loop.\n", catchFileHeader.sequenceNumber, packetQty);
 
    while (catchFileHeader.sequenceNumber != 0){
-//FIXME none of this loop seems to be running but it does loop (packetQty increments)
      if (debug == 1) printf("In file reception while loop\n");
       /* get header response from server */
       bytes_recd = recv(sock_client, &catchFileHeader, sizeof(catchFileHeader), 0);

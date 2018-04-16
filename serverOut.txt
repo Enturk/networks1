@@ -1,0 +1,75 @@
+I am here to listen ... on port 45054
+
+Packet 1 transmitted with 58 data bytes. Line was:
+In this project, you will implement a client and a server
+
+Packet 2 transmitted with 64 data bytes. Line was:
+which use TCP to transmit a file from the server to the client.
+
+Packet 3 transmitted with 57 data bytes. Line was:
+Both the client and the server will run on the course VM
+
+Packet 4 transmitted with 28 data bytes. Line was:
+{\em cisc450.cis.udel.edu},
+
+Packet 5 transmitted with 57 data bytes. Line was:
+but they should be written in such a way that they could
+
+Packet 6 transmitted with 63 data bytes. Line was:
+conceivably be run on any two hosts, not necessarily the same.
+
+Packet 7 transmitted with 50 data bytes. Line was:
+For convenience, both the hostname and the server
+
+Packet 8 transmitted with 58 data bytes. Line was:
+port number may be hardcoded into both client and server,
+
+Packet 9 transmitted with 55 data bytes. Line was:
+but this should be done in such a way that they should
+
+Packet 10 transmitted with 19 data bytes. Line was:
+be easy to change.
+
+Packet 11 transmitted with 1 data bytes. Line was:
+
+
+Packet 12 transmitted with 80 data bytes. Line was:
+The server starts by waiting for a connection request from the client. %printin
+test1.txt
+Packet 13 transmitted with 1 data bytes. Line was:
+
+
+Packet 14 transmitted with 50 data bytes. Line was:
+The client starts by prompting the user to enter 
+
+Packet 15 transmitted with 47 data bytes. Line was:
+%the hostname and port number for the server. 
+
+Packet 16 transmitted with 35 data bytes. Line was:
+%It then prompts the user to enter
+
+Packet 17 transmitted with 75 data bytes. Line was:
+the name of the file to be transferred. The client then sends a connection
+
+Packet 18 transmitted with 80 data bytes. Line was:
+request to the server.  After the connection is established, the client sends a
+test1.txt
+Packet 19 transmitted with 80 data bytes. Line was:
+filename to the server. The server reads the file and sends it to the client in
+test1.txt
+Packet 20 transmitted with 80 data bytes. Line was:
+a series of packets as described below. The client receives the file and stores
+test1.txt
+Packet 21 transmitted with 32 data bytes. Line was:
+it with the name {\em out.txt}.
+
+Packet 22 transmitted with 53 data bytes. Line was:
+When the file transfer is complete, both the client 
+
+Packet 23 transmitted with 36 data bytes. Line was:
+and the server terminate execution.
+
+End of Transmission Packet with sequence number 0 transmitted with 0 data bytes
+
+Number of data packets transmitted: 24
+Total number of data bytes transmitted: 1159
