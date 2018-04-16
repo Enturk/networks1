@@ -224,7 +224,7 @@ int main(void) {
 
       if(catchFileHeader.sequenceNumber == 0) {
     	  printf("End of Transmission Packet with sequence number %d ", packetQty);
-    	  printf("received with %d data bytes", msg_len);
+    	  printf("received with %d data bytes\n", msg_len);
     	  packetQty--;                                      //while loop catches last packet
       }
 
