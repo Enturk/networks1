@@ -10,13 +10,13 @@
 #include <netinet/in.h>     /* for sockaddr_in */
 #include <unistd.h>         /* for close */
 
-#define STRING_SIZE 1024
+#define STRING_SIZE 112 //80+16+16 changed from 1 K
 
 /* SERV_UDP_PORT is the port number on which the server listens for
    incoming messages from clients. You should change this to a different
    number to prevent conflicts with others in the class. */
 
-#define SERV_UDP_PORT 65100
+#define SERV_UDP_PORT 45054
 
 int main(void) {
 
@@ -35,6 +35,18 @@ int main(void) {
    unsigned int msg_len;  /* length of message */
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
    unsigned int i;  /* temporary loop variable */
+
+   struct packetOLove{
+// https://www.tutorialspoint.com/cprogramming/c_unions.htm
+// FIXME this probably doesn't work...
+      union payload {
+         int sequenceNumber;
+         int count;
+         string data;
+      }
+   }
+
+   // ask user for the timeout value as n = 1-10, with the timeout = 10^n
 
    /* open a socket */
 
@@ -69,7 +81,13 @@ int main(void) {
 
    client_addr_len = sizeof (client_addr);
 
+   // TODO get filename
+
+
+   // TODO turn into while loop
    for (;;) {
+
+      // TODO sequence number = 1-sequence number
 
       bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
@@ -86,5 +104,8 @@ int main(void) {
  
       bytes_sent = sendto(sock_server, modifiedSentence, msg_len, 0,
                (struct sockaddr*) &client_addr, client_addr_len);
+      // TODO wait for and get ACK
+
+      // TODO on timeout or bad ACK, need to resend
    }
 }
