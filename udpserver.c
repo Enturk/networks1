@@ -18,6 +18,30 @@
 
 #define SERV_UDP_PORT 45054
 
+// from https://stackoverflow.com/questions/7863499/conversion-of-char-to-binary-in-c/
+void printstringasbinary(char* s)
+{
+    // A small 9 characters buffer we use to perform the conversion
+    char output[9];
+
+    // Until the first character pointed by s is not a null character
+    // that indicates end of string...
+    while (*s)
+    {
+        // Convert the first character of the string to binary using itoa.
+        // Characters in c are just 8 bit integers, at least, in noawdays computers.
+        itoa(*s, output, 2);
+
+        // print out our string and let's write a new line.
+        puts(output);
+
+        // we advance our string by one character,
+        // If our original string was "ABC" now we are pointing at "BC".
+        ++s;
+    }
+}
+
+
 int main(void) {
 
    int sock_server;  /* Socket on which server listens to clients */
@@ -36,15 +60,15 @@ int main(void) {
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
    unsigned int i;  /* temporary loop variable */
 
+   FILE * fp;
+   char * line = NULL;
+   char file_name[0x100];
+
    struct packetOLove{
-// https://www.tutorialspoint.com/cprogramming/c_unions.htm
-// FIXME this probably doesn't work...
-      union payload {
-         int sequenceNumber;
-         int count;
-         string data;
-      }
-   }
+      int sequenceNumber;
+      int count;
+      string data;
+   };
 
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
 
@@ -81,11 +105,24 @@ int main(void) {
 
    client_addr_len = sizeof (client_addr);
 
+   bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
+                     (struct sockaddr *) &client_addr, &client_addr_len);
+   printf("Received Sentence is: %s\n     with length %d\n\n",
+                         sentence, bytes_recd);
    // TODO get filename
+   
 
 
-   // TODO turn into while loop
-   for (;;) {
+   // open file
+   fp = fopen(file_name, "r");
+   if (fp == NULL) {
+      perror("No file of requested name, hanging up on client.\n" );
+      close(sock_server);
+      exit(1);
+   }
+
+   //  main transmission loop
+   while ((read = getline(&line, &len, fp)) > 0) {
 
       // TODO sequence number = 1-sequence number
 
