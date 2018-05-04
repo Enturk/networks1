@@ -41,7 +41,6 @@ void printstringasbinary(char* s)
     }
 }
 
-
 int main(void) {
 
    int sock_server;  /* Socket on which server listens to clients */
@@ -67,7 +66,7 @@ int main(void) {
    struct packetOLove{
       int sequenceNumber;
       int count;
-      string data;
+      char * line = NULL;;
    };
 
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
@@ -109,6 +108,18 @@ int main(void) {
                      (struct sockaddr *) &client_addr, &client_addr_len);
    printf("Received Sentence is: %s\n     with length %d\n\n",
                          sentence, bytes_recd);
+
+   struct packetOLove payTheLoad;
+   // get the goods!
+   // TODO convert from internet numbers to my numbers
+   payTheLoad.sequenceNumber = sentence[0] << 8;
+   payTheLoad.sequenceNumber += sentence[1];
+   payTheLoad.count = sentence[2] << 8;
+   payTheLoad.count += sentence[3];
+   for(i=4; i<(sizeof(sentence)-1); i++) {
+      payTheLoad.data[i-4]= sentence[i];
+   }
+
    // TODO get filename
    
 
