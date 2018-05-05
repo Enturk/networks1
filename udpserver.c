@@ -19,14 +19,18 @@
 #define SERV_UDP_PORT 45054
 
 // from https://stackoverflow.com/questions/7863499/conversion-of-char-to-binary-in-c/
-void printstringasbinary(char* s)
+int printstringasbinary(char* s, int position )
 {
     // A small 9 characters buffer we use to perform the conversion
     char output[9];
 
+    // for the loop...
+    int i = position;
+
     // Until the first character pointed by s is not a null character
     // that indicates end of string...
-    while (*s)
+    for (i; i<position+2; i++) 
+//    while (*s)
     {
         // Convert the first character of the string to binary using itoa.
         // Characters in c are just 8 bit integers, at least, in noawdays computers.
@@ -59,14 +63,20 @@ int main(void) {
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
    unsigned int i;  /* temporary loop variable */
 
+   int debug = 1; //TODO change to 0 before final run
+
    FILE * fp;
    char * line = NULL;
    char file_name[0x100];
+   size_t len = 0;
+
+   short packet_count = 0;
+   short data_start = 0;
 
    struct packetOLove{
       int sequenceNumber;
       int count;
-      char * line = NULL;;
+      char * data;
    };
 
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
@@ -97,6 +107,14 @@ int main(void) {
       exit(1);
    }
 
+   struct timeval tv;
+   tv.tv_sec = 0;
+   tv.tv_usec = 100000;
+   if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+      perror("Timout code Error");
+   }
+
+
    /* wait for incoming messages in an indefinite loop */
 
    printf("Waiting for incoming messages on port %hu\n\n", 
@@ -109,6 +127,25 @@ int main(void) {
    printf("Received Sentence is: %s\n     with length %d\n\n",
                          sentence, bytes_recd);
 
+   // error checking always...
+   if (bytes_recd < 0) {
+      perror("Filename data recv error. Ooops?");
+      close(sock_server);
+      exit(1);
+
+   } else if (bytes_recd == 0) {
+      perror("Filename data recv got end-of-file return\n");
+      close(sock_server);
+      exit(1);
+
+   } else { // bytes_recd > 0
+      if (debug == 1) {
+         printf("Received file request sentence:\n");
+         printf("%s", sentence);
+         printf("\nwith length %d\n\n", bytes_recd);
+      }
+   }
+
    struct packetOLove payTheLoad;
    // get the goods!
    // TODO convert from internet numbers to my numbers
@@ -120,9 +157,9 @@ int main(void) {
       payTheLoad.data[i-4]= sentence[i];
    }
 
-   // TODO get filename
-   
-
+   /* get filename */
+//   strncpy(file_name, rec_message, 100); // do we need this?
+   file_name = payTheLoad.data;
 
    // open file
    fp = fopen(file_name, "r");
@@ -136,24 +173,23 @@ int main(void) {
    while ((read = getline(&line, &len, fp)) > 0) {
 
       // TODO sequence number = 1-sequence number
-
-      bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
-                     (struct sockaddr *) &client_addr, &client_addr_len);
-      printf("Received Sentence is: %s\n     with length %d\n\n",
-                         sentence, bytes_recd);
-
       /* prepare the message to send */
 
       msg_len = bytes_recd;
       for (i=0; i<msg_len; i++)
          modifiedSentence[i] = toupper (sentence[i]);
 
-      /* send message */
- 
+      /* send message */ 
       bytes_sent = sendto(sock_server, modifiedSentence, msg_len, 0,
                (struct sockaddr*) &client_addr, client_addr_len);
+
       // TODO wait for and get ACK
+      bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
+                     (struct sockaddr *) &client_addr, &client_addr_len);
+      printf("Received Sentence is: %s\n     with length %d\n\n",
+                         sentence, bytes_recd);
 
       // TODO on timeout or bad ACK, need to resend
    }
 }
+/* udp_server.c */
