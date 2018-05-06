@@ -13,6 +13,9 @@
 
 #define STRING_SIZE 112
 
+int simulateLoss();
+int simulateACKLoss();
+
 int main(void) {
 
 	int sock_client; /* Socket used by client */
@@ -46,14 +49,16 @@ int main(void) {
 	};
 
 	struct packet recdPacket;
-		recdPacket.count = -1; 		//in case default value is 0
+	recdPacket.count = -1; 		//in case default value is 0
 
 	struct Ack {
 		int ack;
 	};
 
 	struct Ack recdACK;
-        	recdACK.ack = 0;
+	recdACK.ack = 0;
+
+	struct Ack sentACK;
 
 	int timeoutHolder;
 	printf("Please enter a timeout value between 1 and 10\n");
@@ -136,9 +141,9 @@ int main(void) {
 	fileNamePacket.data = fileName; //FIXME needs for loop to change char array
 
 	/* Send file name packet */
-        // FIXME scodaddr is problem
+	// FIXME scodaddr is problem
 	bytes_sent = sendto(sock_client, &fileNamePacket, sizeof(fileNamePacket), 0,
-			(struct scokaddr *) &server_addr, sizeof(server_addr));
+			(struct sockaddr *) &server_addr, sizeof(server_addr));
 
 	if (bytes_sent == -1) {
 		printf("check line 133");
@@ -151,8 +156,7 @@ int main(void) {
 	while (msec < timeout) {
 		clock_t before = clock();
 		do {
-			bytes_recd = recvfrom(sock_client, &recdACK, sizeof(recdACK), 0,
-					(struct sockaddr *) 0, (int *) 0);
+			bytes_recd = recv(sock_client, recdACK, sizeof(recdACK), 0);
 
 			if (recdACK.ack == 0) {
 
@@ -183,40 +187,85 @@ int main(void) {
 
 	while (recdPacket.count != 0) {
 
-		bytes_recd = recvfrom(sock_client, &recdPacket, sizeof(recdPacket),
-							0, (struct sockaddr *) 0, (int *) 0);
+		bytes_recd = recv(sock_client, recdPacket, sizeof(recdPacket), 0);
 
-		if (recdPacket.sequenceNumber == expectedSequenceNumber) {
-			recdPacket.count = (ntohs(recdPacket.count));
-			recdPacket.sequenceNumber = ntohs(recdPacket.sequenceNumber);
-			msg_len = recdPacket.count;
-		}
-		else {
-			recdPacket.count = NULL; //FIXME I don't know if this fix is right
-			continue;
-		}
+		if (recdPacket.count != 0) {
 
+			if (simulateLoss() == 1) {
+				recdPacket = NULL;
+				continue;
+			}
 
-		/* append data to file*/
+			else {
 
-		for(i = 0; i < msg_len; i++) {
-			fprintf(pFile,"%c", receivedSentence[i]);
+				if (recdPacket.sequenceNumber == expectedSequenceNumber) {
+
+					recdPacket.count = (ntohs(recdPacket.count));
+					recdPacket.sequenceNumber = ntohs(recdPacket.sequenceNumber);
+					msg_len = recdPacket.count;
+
+					/* append data to file*/
+
+					for (i = 0; i < msg_len; i++) {
+						fprintf(pFile, "%c", receivedSentence[i]);
+					}
+
+					if(simulateACKLoss == 0) {
+						sentACK.ack = expectedSequenceNumber;
+						sendto(sock_client, sentACK, sizeof(sentACK), 0,(struct sockaddr *) &server_addr, sizeof(server_addr));
+
+						expectedSequenceNumber = 1 - expectedSequenceNumber;
+					}
+
+				}
+
+				else {
+					sentACK.ack = 1 - expectedSequenceNumber;
+					sendto(sock_client, sentACK, sizeof(sentACK), 0, (struct sockaddr *) &server_addr,
+							sizeof(server_addr));
+					continue;
+				}
+			}
 		}
 
 		/* end of transmission packet */
 
-		if(recdPacket.count == 0) {
+		else {                                  //recdpacket.count == 0
 			printf("End of transmission");
 		}
 
 	}
 
-		/* close file */
+	/* close file */
 
-		fclose(pFile);
+	fclose(pFile);
 
+	/* close the socket */
 
-		/* close the socket */
+	close(sock_client);
+}
 
-		close(sock_client);
+int simulateLoss() {
+	srand(time(NULL));
+	double randomNumber = rand() % 1;
+	
+	if(randomNumber < packetLossRate) {
+		return 1;
 	}
+	else {
+		return 0;
+	}
+}
+
+int simulateACKLoss() {
+	srand(time(NULL));
+	double randomNumber = rand() % 1;
+	
+	if(randomNumber < ACKLossRate) {
+		return 1;
+	}
+	
+	else {
+		return 0;
+	}
+}
