@@ -249,23 +249,24 @@ int simulateLoss() {
 	srand(time(NULL));
 	double randomNumber = rand() % 1;
 	
-	if(randomNumber < packetLossRate) {
-		return 1;
-	}
-	else {
-		return 0;
-	}
+	//if(randomNumber < packetLossRate) {
+//		return 1;
+//	}
+//	else {
+//		return 0;
+//	}
+	return 0;
 }
 
 int simulateACKLoss() {
-	srand(time(NULL));
-	double randomNumber = rand() % 1;
+	//srand(time(NULL));
+	//double randomNumber = rand() % 1;
 	
-	if(randomNumber < ACKLossRate) {
-		return 1;
-	}
+	//if(randomNumber < ACKLossRate) {
+	//	return 1;
+	//}
 	
-	else {
+	//else {
 		return 0;
 	}
 }
