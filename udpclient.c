@@ -10,6 +10,7 @@
 #include <netinet/in.h>     /* for sockaddr_in */
 #include <unistd.h>         /* for close */
 #include <time.h>
+#include <math.h>
 
 #define STRING_SIZE 112
 
@@ -138,8 +139,9 @@ int main(void) {
 	struct packet fileNamePacket;
 	fileNamePacket.count = strlen(fileName);
 	fileNamePacket.sequenceNumber = 0;
-	fileNamePacket.data = fileName; //FIXME needs for loop to change char array
-
+	for(i = 0; i < sizeof(fileName); i++) {
+		fileNamePacket.data[i] = fileName[i];
+	}
 	/* Send file name packet */
 	// FIXME scodaddr is problem
 	bytes_sent = sendto(sock_client, &fileNamePacket, sizeof(fileNamePacket), 0,
@@ -156,7 +158,7 @@ int main(void) {
 	while (msec < timeout) {
 		clock_t before = clock();
 		do {
-			bytes_recd = recv(sock_client, recdACK, sizeof(recdACK), 0);
+			bytes_recd = recv(sock_client, &recdACK, sizeof(recdACK), 0);
 
 			if (recdACK.ack == 0) {
 
@@ -187,12 +189,12 @@ int main(void) {
 
 	while (recdPacket.count != 0) {
 
-		bytes_recd = recv(sock_client, recdPacket, sizeof(recdPacket), 0);
+		bytes_recd = recv(sock_client, &recdPacket, sizeof(recdPacket), 0);
 
 		if (recdPacket.count != 0) {
 
 			if (simulateLoss() == 1) {
-				recdPacket = NULL;
+				//recdPacket = NULL;
 				continue;
 			}
 
@@ -212,7 +214,7 @@ int main(void) {
 
 					if(simulateACKLoss == 0) {
 						sentACK.ack = expectedSequenceNumber;
-						sendto(sock_client, sentACK, sizeof(sentACK), 0,(struct sockaddr *) &server_addr, sizeof(server_addr));
+						sendto(sock_client, &sentACK, sizeof(sentACK), 0,(struct sockaddr *) &server_addr, sizeof(server_addr));
 
 						expectedSequenceNumber = 1 - expectedSequenceNumber;
 					}
@@ -221,7 +223,7 @@ int main(void) {
 
 				else {
 					sentACK.ack = 1 - expectedSequenceNumber;
-					sendto(sock_client, sentACK, sizeof(sentACK), 0, (struct sockaddr *) &server_addr,
+					sendto(sock_client, &sentACK, sizeof(sentACK), 0, (struct sockaddr *) &server_addr,
 							sizeof(server_addr));
 					continue;
 				}
@@ -248,25 +250,24 @@ int main(void) {
 int simulateLoss() {
 	srand(time(NULL));
 	double randomNumber = rand() % 1;
-	
-	//if(randomNumber < packetLossRate) {
-//		return 1;
-//	}
-//	else {
-//		return 0;
-//	}
-	return 0;
+
+	if(randomNumber < packetLossRate) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
 }
 
 int simulateACKLoss() {
-	//srand(time(NULL));
-	//double randomNumber = rand() % 1;
-	
-	//if(randomNumber < ACKLossRate) {
-	//	return 1;
-	//}
-	
-	//else {
+	srand(time(NULL));
+	double randomNumber = rand() % 1;
+
+	if(randomNumber < ACKLossRate) {
+		return 1;
+	}
+
+	else {
 		return 0;
-	//}
+	}
 }
