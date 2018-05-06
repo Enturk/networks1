@@ -45,6 +45,20 @@ int printstringasbinary(char* s, int position )
     }
 }
 
+void string2char(char* s, char* c) {
+   int i = 0;
+   if (sizeof(s)>sizeof(c)) {
+      perror("string2char error: end container too small\n");
+      exit(1);
+   }
+
+   int max = (sizeof(s)/sizeof(s[0]))-1;
+   for (i; i<max; i++) {
+      if (c[i] == NULL) break;
+      c[i] = s[i];
+   }
+}
+
 int main(void) {
 
    int sock_server;  /* Socket on which server listens to clients */
@@ -76,7 +90,8 @@ int main(void) {
    struct packetOLove{
       int sequenceNumber;
       int count;
-      char * data;
+      int len;
+      char * data[80];
    };
 
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
@@ -109,9 +124,10 @@ int main(void) {
 
    struct timeval tv;
    tv.tv_sec = 0;
-   tv.tv_usec = 100000;
+   tv.tv_usec = 100;
    if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
       perror("Timout code Error");
+      exit(1);
    }
 
 
