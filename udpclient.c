@@ -35,7 +35,7 @@ int main(void) {
 
 	int timeout;
 
-	char fileName[];
+	char fileName[STRING_SIZE];
 
 	int expectedSequenceNumber = 1;
 
@@ -46,18 +46,21 @@ int main(void) {
 	};
 
 	struct packet recdPacket;
-	recdPacket.count = -1; 		//in case default value is 0
+		recdPacket.count = -1; 		//in case default value is 0
 
 	struct Ack {
 		int ack;
 	};
 
-	struct Ack recdACK = 0;
+	struct Ack recdACK;
+        	recdACK.ack = 0;
 
 	int timeoutHolder;
 	printf("Please enter a timeout value between 1 and 10\n");
-	scanf("%s", &timeoutHolder);
+	scanf("%d", &timeoutHolder);
 	timeout = pow(10, timeoutHolder);
+
+	int i; // for loops
 
 	/* open a socket */
 
@@ -130,10 +133,10 @@ int main(void) {
 	struct packet fileNamePacket;
 	fileNamePacket.count = strlen(fileName);
 	fileNamePacket.sequenceNumber = 0;
-	fileNamePacket.data = fileName;
+	fileNamePacket.data = fileName; //FIXME needs for loop to change char array
 
 	/* Send file name packet */
-
+        // FIXME scodaddr is problem
 	bytes_sent = sendto(sock_client, &fileNamePacket, sizeof(fileNamePacket), 0,
 			(struct scokaddr *) &server_addr, sizeof(server_addr));
 
@@ -189,14 +192,14 @@ int main(void) {
 			msg_len = recdPacket.count;
 		}
 		else {
-			recdPacket = NULL;
+			recdPacket.count = NULL; //FIXME I don't know if this fix is right
 			continue;
 		}
 
 
 		/* append data to file*/
 
-		for(int i = 0; i < msg_len; i++) {
+		for(i = 0; i < msg_len; i++) {
 			fprintf(pFile,"%c", receivedSentence[i]);
 		}
 
