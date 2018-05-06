@@ -268,5 +268,5 @@ int simulateACKLoss() {
 	
 	//else {
 		return 0;
-	}
+	//}
 }
