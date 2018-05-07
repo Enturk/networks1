@@ -1,5 +1,5 @@
 /* udp_server.c */
-/* Programmed by Adarsh Sethi */
+/* Programmed by Adarsh Sethi, Nazim Karaca, & Timothy Louie */
 /* February 21, 2018 */
 
 #include <ctype.h>          /* for toupper */
@@ -59,6 +59,32 @@ void string2char(char* s, char* c) {
    }
 }
 
+int simulateLoss() {
+    srand(time(NULL));
+    double randomNumber = rand() % 1;
+
+    if(randomNumber < packetLossRate) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+int simulateACKLoss() {
+    srand(time(NULL));
+    double randomNumber = rand() % 1;
+
+    if(randomNumber < ACKLossRate) {
+        return 1;
+    }
+
+    else {
+        return 0;
+    }
+}
+
+
 int main(void) {
 
    int sock_server;  /* Socket on which server listens to clients */
@@ -96,6 +122,18 @@ int main(void) {
 
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
 
+   struct timeval tv;
+   tv.tv_sec = 0;
+
+   printf("Please enter a value between 1 and 10.\n");
+   scanf("%d", &tv.tv_usec); 
+   tv.tv_usec = pow(10,tv.tv_usec);
+
+   if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+      perror("Timout code Error");
+      exit(1);
+   }
+
    /* open a socket */
 
    if ((sock_server = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -122,13 +160,6 @@ int main(void) {
       exit(1);
    }
 
-   struct timeval tv;
-   tv.tv_sec = 0;
-   tv.tv_usec = 100;
-   if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
-      perror("Timout code Error");
-      exit(1);
-   }
 
 
    /* wait for incoming messages in an indefinite loop */
