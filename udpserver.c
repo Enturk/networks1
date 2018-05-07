@@ -10,6 +10,9 @@
 #include <netinet/in.h>     /* for sockaddr_in */
 #include <unistd.h>         /* for close */
 
+#include <math.h>           /* for power */
+#include <string.h>         /* for the love of god... */
+
 #define STRING_SIZE 112 //80+16+16 changed from 1 K
 
 /* SERV_UDP_PORT is the port number on which the server listens for
@@ -45,6 +48,7 @@ int printstringasbinary(char* s, int position )
     }
 }
 
+//FIXME use count to determine length
 void string2char(char* s, char* c) {
    int i = 0;
    if (sizeof(s)>sizeof(c)) {
@@ -54,7 +58,7 @@ void string2char(char* s, char* c) {
 
    int max = (sizeof(s)/sizeof(s[0]))-1;
    for (i; i<max; i++) {
-      if (c[i] == NULL) break;
+      //if (c[i] == '\0') break;
       c[i] = s[i];
    }
 }
@@ -104,7 +108,7 @@ int main(void) {
    unsigned int i;  /* temporary loop variable */
 
    int debug = 1; //TODO change to 0 before final run
-
+ 
    FILE * fp;
    char * line = NULL;
    char file_name[0x100];
@@ -117,7 +121,7 @@ int main(void) {
       int sequenceNumber;
       int count;
       int len;
-      char * data[80];
+      char data[80];
    };
 
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
@@ -126,7 +130,7 @@ int main(void) {
    tv.tv_sec = 0;
 
    printf("Please enter a value between 1 and 10.\n");
-   scanf("%d", &tv.tv_usec); 
+   scanf("%d", &(tv.tv_usec)); 
    tv.tv_usec = pow(10,tv.tv_usec);
 
    if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
@@ -206,7 +210,7 @@ int main(void) {
 
    /* get filename */
 //   strncpy(file_name, rec_message, 100); // do we need this?
-   file_name = payTheLoad.data;
+// FIXME use string2char to transfer contents? file_name = payTheLoad.data;
 
    // open file
    fp = fopen(file_name, "r");
@@ -217,7 +221,7 @@ int main(void) {
    }
 
    //  main transmission loop
-   while ((read = getline(&line, &len, fp)) > 0) {
+   while (( getline(&line, &len, fp)) > 0) {
 
       // TODO sequence number = 1-sequence number
       /* prepare the message to send */
