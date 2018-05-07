@@ -147,8 +147,8 @@ int main(void) {
 	printf("Please enter the name of the file to be transferred: \n");
 	scanf("%c", fileName);
 	struct packet fileNamePacket;
-	fileNamePacket.count = strlen(fileName);
-	fileNamePacket.sequenceNumber = 0;
+	fileNamePacket.count = htonl(strlen(fileName));
+	fileNamePacket.sequenceNumber = htonl(0);
 	for(i = 0; i < sizeof(fileName); i++) {
 		fileNamePacket.data[i] = fileName[i];
 	}
@@ -170,7 +170,7 @@ int main(void) {
 		do {
 			bytes_recd = recv(sock_client, &recdACK, sizeof(recdACK), 0);
 
-			if (recdACK.ack == 0) {
+			if (ntohl(recdACK.ack) == 0) {
 
 				break;
 			}
@@ -179,7 +179,7 @@ int main(void) {
 			microsec = difference * 1000000 / CLOCKS_PER_SEC;
 		} while (microsec < timeout);
 
-		if (microsec >= timeout && recdACK.ack == 1) {
+		if (microsec >= timeout && ntohl(recdACK.ack) == 1) {
 			microsec = 0;
 		}
 	}
@@ -197,9 +197,11 @@ int main(void) {
 
 	/*receive packets from server */
 
-	while (recdPacket.count != 0) {
+	while (ntohl(recdPacket.count) != 0) {
 
 		bytes_recd = recv(sock_client, &recdPacket, sizeof(recdPacket), 0);
+		recdPacket.sequenceNumber = ntohl(recdPacket.sequenceNumber);
+		recdPacket.count = ntohl(recdPacket.count);
 
 		if (recdPacket.count != 0) {
 
