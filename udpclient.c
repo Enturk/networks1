@@ -14,8 +14,8 @@
 
 #define STRING_SIZE 112
 
-int simulateLoss();
-int simulateACKLoss();
+int simulateLoss(double packetLossRate);
+int simulateACKLoss(double ACKLossRate);
 
 int main(void) {
 
@@ -65,6 +65,16 @@ int main(void) {
 	printf("Please enter a timeout value between 1 and 10\n");
 	scanf("%d", &timeoutHolder);
 	timeout = pow(10, timeoutHolder);
+
+
+	double packetLossRate;
+	printf("Please enter a packet loss rate value between 0 and 1\n");
+	scanf("%lf", packetLossRate);
+
+	double ACKLossRate;
+	printf("Please enter a ACK loss rate value between 0 and 1\n");
+	scanf("%lf", ACKLossRate);
+
 
 	int i; // for loops
 
@@ -153,9 +163,9 @@ int main(void) {
 
 	/* receive ack for file name packet */
 
-	int msec = 0;
+	int microsec = 0;
 
-	while (msec < timeout) {
+	while (microsec < timeout) {
 		clock_t before = clock();
 		do {
 			bytes_recd = recv(sock_client, &recdACK, sizeof(recdACK), 0);
@@ -166,11 +176,11 @@ int main(void) {
 			}
 
 			clock_t difference = clock() - before;
-			msec = difference * 1000 / CLOCKS_PER_SEC;
-		} while (msec < timeout);
+			microsec = difference * 1000000 / CLOCKS_PER_SEC;
+		} while (microsec < timeout);
 
-		if (msec >= timeout && recdACK.ack == 1) {
-			msec = 0;
+		if (microsec >= timeout && recdACK.ack == 1) {
+			microsec = 0;
 		}
 	}
 
@@ -193,8 +203,8 @@ int main(void) {
 
 		if (recdPacket.count != 0) {
 
-			if (simulateLoss() == 1) {
-				//recdPacket = NULL;
+			if (simulateLoss(packetLossRate) == 1) {
+				printf("Packet %d lost", recdPacket.sequenceNumber);
 				continue;
 			}
 
@@ -206,22 +216,32 @@ int main(void) {
 					recdPacket.sequenceNumber = ntohs(recdPacket.sequenceNumber);
 					msg_len = recdPacket.count;
 
+					printf("Packet %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
+
 					/* append data to file*/
 
 					for (i = 0; i < msg_len; i++) {
 						fprintf(pFile, "%c", receivedSentence[i]);
 					}
 
-					if(simulateACKLoss == 0) {
+					if(simulateACKLoss(ACKLossRate) == 0) {
 						sentACK.ack = expectedSequenceNumber;
 						sendto(sock_client, &sentACK, sizeof(sentACK), 0,(struct sockaddr *) &server_addr, sizeof(server_addr));
+						printf("Ack %d transmitted", sentACK.ack);
+						expectedSequenceNumber = 1 - expectedSequenceNumber;
+					}
 
+					else {
+						printf("ACK %d lost", expectedSequenceNumber);
 						expectedSequenceNumber = 1 - expectedSequenceNumber;
 					}
 
 				}
 
 				else {
+
+					printf("Duplicate packet %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
+
 					sentACK.ack = 1 - expectedSequenceNumber;
 					sendto(sock_client, &sentACK, sizeof(sentACK), 0, (struct sockaddr *) &server_addr,
 							sizeof(server_addr));
@@ -233,7 +253,7 @@ int main(void) {
 		/* end of transmission packet */
 
 		else {                                  //recdpacket.count == 0
-			printf("End of transmission");
+			printf("End of transmission Packet with sequence number %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
 		}
 
 	}
@@ -247,7 +267,7 @@ int main(void) {
 	close(sock_client);
 }
 
-int simulateLoss() {
+int simulateLoss(double packetLossRate) {
 	srand(time(NULL));
 	double randomNumber = rand() % 1;
 
@@ -259,7 +279,7 @@ int simulateLoss() {
 	}
 }
 
-int simulateACKLoss() {
+int simulateACKLoss(double ACKLossRate) {
 	srand(time(NULL));
 	double randomNumber = rand() % 1;
 
