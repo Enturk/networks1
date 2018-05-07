@@ -69,11 +69,11 @@ int main(void) {
 
 	double packetLossRate;
 	printf("Please enter a packet loss rate value between 0 and 1\n");
-	scanf("%lf", packetLossRate);
+	scanf("%lf", &packetLossRate);
 
 	double ACKLossRate;
 	printf("Please enter a ACK loss rate value between 0 and 1\n");
-	scanf("%lf", ACKLossRate);
+	scanf("%lf", &ACKLossRate);
 
 
 	int i; // for loops
