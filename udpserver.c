@@ -147,11 +147,11 @@ int main(void) {
    if (debug == 1) printf("Received Sentence is: %s\n     with length %d\n\n",
                          getTheLoad.data, bytes_recd); // this works, apparently
 
-
-   if (debug == 1) printf("You entered %d as the timeout power, and tv_usec is now %d\n", intput, tv.tv_usec);
    struct timeval tv;
    tv.tv_sec = 0;
    tv.tv_usec = 1000; // one millisecond = 1000 microseconds!
+
+   if (debug == 1) printf("You entered %d as the timeout power, and tv_usec is now %d\n", intput, tv.tv_usec);
    for (i=0; i<intput; i++) {
       tv.tv_usec *= 10;
       if (debug == 1) printf("tv_usec is now %d\n", tv.tv_usec);
