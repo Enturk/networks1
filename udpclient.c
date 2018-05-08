@@ -41,7 +41,7 @@ int main(void) {
 
 	char fileName[STRING_SIZE];
 
-	int expectedSequenceNumber = 1;
+	int expectedSequenceNumber = 0;
 
 	struct packet {
 		int sequenceNumber;
