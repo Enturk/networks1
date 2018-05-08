@@ -164,7 +164,13 @@ int main(void) {
 	/* Prepare file name packet */
 
 	printf("Please enter the name of the file to be transferred: \n");
-	scanf("%c", fileNamePacket.fileName[STRING_SIZE]);
+	scanf("%c", fileName);
+	struct packet fileNamePacket;
+	fileNamePacket.count = htonl(strlen(fileName));
+	fileNamePacket.sequenceNumber = htonl(0);
+	for(i = 0; i < sizeof(fileName); i++) {
+		fileNamePacket.data[i] = fileName[i];
+	}
 	/* Send file name packet */
 	// FIXME scodaddr is problem
 	bytes_sent = sendto(sock_client, &fileNamePacket, sizeof(fileNamePacket), 0,
