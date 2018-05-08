@@ -84,7 +84,7 @@ int main(void) {
    FILE * fp;
    char * line = NULL;
    char file_name[0x100];
-   size_t len = 0;
+   int len = 0;
 
    short packet_count = 0;
    short data_start = 0;
@@ -168,11 +168,11 @@ int main(void) {
    for (i=0; i<intput; i++) {
       tv.tv_usec *= 10;
       if (debug == 1) printf("tv_usec is now %d\n", tv.tv_usec);
-   }*/
+   }
 
    if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
       printf("Timout expired for packet number zero\n");
-   }
+   }*/
 
    // error checking always...
    if (bytes_recd < 0) {
@@ -358,6 +358,7 @@ int main(void) {
       bytes_recd = 0;
    }
 */
+   }
    // send EOM packet
    // prep payload
    payTheLoad.sequenceNumber = htons(totalPackets % 2);
