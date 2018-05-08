@@ -92,7 +92,7 @@ int main(void) {
    struct packetOLove{
       int sequenceNumber;
       int count;
-      char data[80];
+      char data[];
    };
 
    
@@ -366,8 +366,8 @@ int main(void) {
    // prep payload
    payTheLoad.sequenceNumber = htons(totalPackets % 2);
    payTheLoad.count = htons(0);
-   memset(payTheLoad.data, 0, sizeof(payTheLoad.data));
-   len = sizeof(payTheLoad.data);
+   memset(payTheLoad.data, 0, strlen(payTheLoad.data));
+   len = strlen(payTheLoad.data);
 
    // send it out...
    bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
