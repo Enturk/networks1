@@ -11,7 +11,7 @@
 #include <unistd.h>         /* for close */
 
 #include <math.h>           /* for power */
-#include <string.h>         /* for the love of god... */
+#include <string.h>         /* for the love of poetry... */
 
 #define STRING_SIZE 112 //80+16+16 changed from 1 K
 
@@ -21,49 +21,21 @@
 
 #define SERV_UDP_PORT 45054
 
-// from https://stackoverflow.com/questions/7863499/conversion-of-char-to-binary-in-c/
-int printstringasbinary(char* s, int position )
-{
-    // A small 9 characters buffer we use to perform the conversion
-    char output[9];
-
-    // for the loop...
-    int i = position;
-
-    // Until the first character pointed by s is not a null character
-    // that indicates end of string...
-    for (i; i<position+2; i++) 
-//    while (*s)
-    {
-        // Convert the first character of the string to binary using itoa.
-        // Characters in c are just 8 bit integers, at least, in noawdays computers.
-        itoa(*s, output, 2);
-
-        // print out our string and let's write a new line.
-        puts(output);
-
-        // we advance our string by one character,
-        // If our original string was "ABC" now we are pointing at "BC".
-        ++s;
-    }
-}
-
 //FIXME use count to determine length
-void string2char(char* s, char* c) {
+void string2char(char* s, char* c, int length) {
    int i = 0;
    if (sizeof(s)>sizeof(c)) {
       perror("string2char error: end container too small\n");
       exit(1);
    }
 
-   int max = (sizeof(s)/sizeof(s[0]))-1;
-   for (i; i<max; i++) {
+   for (i; i<length; i++) {
       //if (c[i] == '\0') break;
       c[i] = s[i];
    }
 }
 
-int simulateLoss() {
+int simulateLoss(double packetLossRate) {
     srand(time(NULL));
     double randomNumber = rand() % 1;
 
@@ -75,7 +47,7 @@ int simulateLoss() {
     }
 }
 
-int simulateACKLoss() {
+int simulateACKLoss(double ACKLossRate) {
     srand(time(NULL));
     double randomNumber = rand() % 1;
 
@@ -120,18 +92,24 @@ int main(void) {
    struct packetOLove{
       int sequenceNumber;
       int count;
-      int len;
       char data[80];
    };
+
+   int totalPackets=0;
+   int totalCount=0;
 
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
 
    struct timeval tv;
    tv.tv_sec = 0;
+   tv.tv_usec = 10;
 
+   int intput;
    printf("Please enter a value between 1 and 10.\n");
-   scanf("%d", &(tv.tv_usec)); 
-   tv.tv_usec = pow(10,tv.tv_usec);
+   scanf("%d", &intput); 
+   for (i=0; i<intput; i++) {
+      tv.tv_usec *= 10;
+   }
 
    if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
       perror("Timout code Error");
@@ -164,7 +142,7 @@ int main(void) {
       exit(1);
    }
 
-
+   struct packetOLove getTheLoad;
 
    /* wait for incoming messages in an indefinite loop */
 
@@ -173,7 +151,8 @@ int main(void) {
 
    client_addr_len = sizeof (client_addr);
 
-   bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
+   // try getTheLoad instead of sentence
+   bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
    printf("Received Sentence is: %s\n     with length %d\n\n",
                          sentence, bytes_recd);
@@ -190,6 +169,26 @@ int main(void) {
       exit(1);
 
    } else { // bytes_recd > 0
+      // get the goods!
+      /* this is probably unnecessary
+      getTheLoad.sequenceNumber = ntohs(sentence[0]) << 8;
+      getTheLoad.sequenceNumber += ntohs(sentence[1]);
+      getTheLoad.count = ntohs(sentence[2]) << 8;
+      getTheLoad.count += ntohs(sentence[3]);
+      for(i=0; i<payTheLoad.count; i++) {
+         payTheLoad.data[i]= sentence[i+4];
+         filename[i] = sentence[i+4];
+      } */
+      getTheLoad.sequenceNumber = ntohs(getTheLoad.sequenceNumber);
+      getTheLoad.count = ntohs(getTheLoad.count);
+      strncpy(file_name, getTheLoad.data, getTheLoad.count);
+
+      // or, instead of the above for loop:
+      // strncpy(file_name, rec_message, 100);
+      // or:
+      /* get filename */
+      // string2char(&(payTheLoad.data), filename, paytheLoad.count);
+
       if (debug == 1) {
          printf("Received file request sentence:\n");
          printf("%s", sentence);
@@ -197,20 +196,7 @@ int main(void) {
       }
    }
 
-   struct packetOLove payTheLoad;
-   // get the goods!
-   // TODO convert from internet numbers to my numbers
-   payTheLoad.sequenceNumber = sentence[0] << 8;
-   payTheLoad.sequenceNumber += sentence[1];
-   payTheLoad.count = sentence[2] << 8;
-   payTheLoad.count += sentence[3];
-   for(i=4; i<(sizeof(sentence)-1); i++) {
-      payTheLoad.data[i-4]= sentence[i];
-   }
-
-   /* get filename */
-//   strncpy(file_name, rec_message, 100); // do we need this?
-// FIXME use string2char to transfer contents? file_name = payTheLoad.data;
+   // ACKit
 
    // open file
    fp = fopen(file_name, "r");
@@ -220,27 +206,72 @@ int main(void) {
       exit(1);
    }
 
+   // sending struct
+   struct packetOLove payTheLoad;
+   payTheLoad.sequenceNumber = 1;
+
    //  main transmission loop
    while (( getline(&line, &len, fp)) > 0) {
 
-      // TODO sequence number = 1-sequence number
       /* prepare the message to send */
-
-      msg_len = bytes_recd;
-      for (i=0; i<msg_len; i++)
-         modifiedSentence[i] = toupper (sentence[i]);
+      payTheLoad.sequenceNumber = htons(1 - payTheLoad.sequenceNumber);
+      payTheLoad.count = htons(totalCount+strlen(line));
+      strncpy(payTheLoad.data, line, strlen(line));
 
       /* send message */ 
-      bytes_sent = sendto(sock_server, modifiedSentence, msg_len, 0,
+      bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
                (struct sockaddr*) &client_addr, client_addr_len);
 
-      // TODO wait for and get ACK
-      bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
+      // error checking
+      if (bytes_sent < 0) {
+         perror("Header send error, trying again... ");
+         bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
+               (struct sockaddr*) &client_addr, client_addr_len);
+         if (bytes_sent < 0)
+            perror("Resend failed, giving up.\n");
+         else {
+            printf("Resend successful. Party on.\n");
+         }
+      } else if (debug == 1) {
+         printf("Header packet number %d transmitted ", packet_count);
+         printf("with %d data bytes\n", bytes_sent);
+      }
+
+      // wait for and get ACK
+      bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
       printf("Received Sentence is: %s\n     with length %d\n\n",
                          sentence, bytes_recd);
 
-      // TODO on timeout or bad ACK, need to resend
+      // TODO implement packet or ACK loss
+
+      // on timeout or bad ACK, need to resend
+      while (getTheLoad.sequenceNumber != payTheLoad.sequenceNumber) { // TODO add timeout condition
+         bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
+               (struct sockaddr*) &client_addr, client_addr_len);
+
+         bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
+               (struct sockaddr *) &client_addr, &client_addr_len);
+         // TODO need another timeout checker here?
+       
+      }
+
+      totalPackets++;
+      totalCount += strlen(line)+32;
    }
+
+   // TODO send EOM packet
+   // TODO prep payload
+   payTheLoad.sequenceNumber = htons(totalPackets % 2);
+   payTheLoad.count = htons(0);
+   memset(payTheLoad.data, 0, sizeof(payTheLoad.data));
+
+   bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
+         (struct sockaddr*) &client_addr, client_addr_len);
+
+
+   // clean up a bit
+   fclose(fp);
+   close(sock_server);
 }
 /* udp_server.c */
