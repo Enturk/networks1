@@ -46,7 +46,7 @@ int main(void) {
 	struct packet {
 		int sequenceNumber;
 		int count;
-		char data[];
+		char data[80];
 	};
 
 	struct packet recdPacket;
