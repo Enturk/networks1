@@ -84,7 +84,7 @@ int main(void) {
    FILE * fp;
    char * line = NULL;
    char file_name[0x100];
-   int len = 0;
+   size_t len = 0;
 
    short packet_count = 0;
    short data_start = 0;
