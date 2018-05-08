@@ -268,7 +268,7 @@ int main(void) {
          else if (debug == 1) {
             printf("Packet %d transmitted ", ntohl(payTheLoad.sequenceNumber));
             len = sizeof(line);
-            printf("with %z data bytes\n", len);
+            printf("with %zu data bytes\n", len);
          }
          
          
@@ -370,7 +370,7 @@ int main(void) {
    bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
          (struct sockaddr*) &client_addr, client_addr_len);
    printf("End of Transmission Packet with sequence number %d ", totalPackets % 2);
-   printf("transmitted with %z data bytes\n", len);
+   printf("transmitted with %zu data bytes\n", len);
 
    // clean up a bit
    fclose(fp);
