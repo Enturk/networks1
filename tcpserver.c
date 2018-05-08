@@ -185,7 +185,6 @@ int main(void) {
          fileSendHeader.sequenceNumber = packet_count;
          fileSendHeader.count = msg_len;
 
-
          // file transmission loop
          while ((read = getline(&line, &len, fp)) > 0) {
 

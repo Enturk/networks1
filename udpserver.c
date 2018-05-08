@@ -12,7 +12,7 @@
 
 #include <math.h>           /* for power */
 #include <string.h>         /* for the love of poetry... */
-
+#include <time.h> 	    // for timeout
 #define STRING_SIZE 112 //80+16+16 changed from 1 K
 
 /* SERV_UDP_PORT is the port number on which the server listens for
@@ -103,7 +103,7 @@ int main(void) {
    int TOcount = 0;
 
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
-
+   printf("Please enter a value between 1 and 10 for the power of the timeout\n");
    int intput;
    scanf("%d", &intput); 
 
@@ -147,7 +147,7 @@ int main(void) {
    if (debug == 1) printf("Received Sentence is: %s\n     with length %d\n\n",
                          getTheLoad.data, bytes_recd); // this works, apparently
 
-   struct timeval tv;
+/*   struct timeval tv;
    tv.tv_sec = 0;
    tv.tv_usec = 1000; // one millisecond = 1000 microseconds!
 
@@ -155,7 +155,7 @@ int main(void) {
    for (i=0; i<intput; i++) {
       tv.tv_usec *= 10;
       if (debug == 1) printf("tv_usec is now %d\n", tv.tv_usec);
-   }
+   }*/
 
    if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
       printf("Timout expired for packet number zero\n");
@@ -244,19 +244,30 @@ int main(void) {
          printf("with %d data bytes\n", len);
       }
 
-      // wait for and get ACK
-      bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
-                     (struct sockaddr *) &client_addr, &client_addr_len);
-      if (bytes_recd > 0 && ntohs(getTheLoad.sequenceNumber) == ntohs(payTheLoad.sequenceNumber)) {
-         ACKcount++;
-         printf("ACK %d received\n", ntohs(getTheLoad.sequenceNumber));
+      // wait for and get ACK with timeout
+      int microsec = 0;
+      clock_t before = clock();
+      do {
+         bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
+                  (struct sockaddr *) &client_addr, &client_addr_len);
+         if (bytes_recd > 0 && ntohs(getTheLoad.sequenceNumber) == ntohs(payTheLoad.sequenceNumber)) {
+            ACKcount++;
+            printf("ACK %d received\n", ntohs(getTheLoad.sequenceNumber));
+            break;
+         }
+         clock_t difference = clock() - before;
+         microsec = difference * 1000000 / CLOCKS_PER_SEC;
+      } while (microsec < timeout);
+      if (microsec >= timeout && ntohl(recdACK.ack) == 1) {
+         microsec = 0;
       }
 
+
       // timeout FIXME if sock_server doesn't work
-      if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+      /*if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
          printf("Timeout expired for packet numbered %d\n", ntohs(payTheLoad.sequenceNumber));
          TOcount++;
-      }
+      }*/
 
       // resend due to pad ack or timeout
       while (getTheLoad.sequenceNumber != payTheLoad.sequenceNumber) { // no timeout check needed
