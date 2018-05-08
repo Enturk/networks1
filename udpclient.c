@@ -41,7 +41,7 @@ int main(void) {
 
 	char fileName[STRING_SIZE];
 
-	int expectedSequenceNumber = 0;
+	int expectedSequenceNumber = 1;
 
 	struct packet {
 		int sequenceNumber;
@@ -56,14 +56,16 @@ int main(void) {
 		int ack;
 	};
 
+	struct fileNameSending {
+		char name[STRING_SIZE];
+	};
+
+	struct fileNameSending fileNamePacket;
+
 	struct Ack recdACK;
 	recdACK.ack = 0;
 
 	struct Ack sentACK;
-	
-	struct fileNamePacket {
-		char fileName[STRING_SIZE];
-	}
 
 
 	int receivedDataPackets = 0;
@@ -140,20 +142,16 @@ int main(void) {
 
 	/* initialize server address information */
 
-	//printf("Enter hostname of server: ");
-	//scanf("%s", server_hostname);
-	server_hostname = "cisc450.cis.udel.edu"
-	
+	printf("Enter hostname of server: ");
+	scanf("%s", server_hostname);
 	if ((server_hp = gethostbyname(server_hostname)) == NULL) {
 		perror("Client: invalid server hostname\n");
 		close(sock_client);
 		exit(1);
 	}
-	//printf("Enter port number for server: ");
-	//scanf("%hu", &server_port);
+	printf("Enter port number for server: ");
+	scanf("%hu", &server_port);
 
-	server_port = 45054
-	
 	/* Clear server address structure and initialize with server address */
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
@@ -164,13 +162,7 @@ int main(void) {
 	/* Prepare file name packet */
 
 	printf("Please enter the name of the file to be transferred: \n");
-	scanf("%c", fileName);
-	struct packet fileNamePacket;
-	fileNamePacket.count = htonl(strlen(fileName));
-	fileNamePacket.sequenceNumber = htonl(0);
-	for(i = 0; i < sizeof(fileName); i++) {
-		fileNamePacket.data[i] = fileName[i];
-	}
+	scanf("%c", fileNamePacket.fileName[STRING_SIZE]);
 	/* Send file name packet */
 	// FIXME scodaddr is problem
 	bytes_sent = sendto(sock_client, &fileNamePacket, sizeof(fileNamePacket), 0,
