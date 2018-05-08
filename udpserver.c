@@ -106,22 +106,13 @@ int main(void) {
 
    struct timeval tv;
    tv.tv_sec = 0;
-   tv.tv_usec = 10;
+   tv.tv_usec = 1000; // one millisecond = 1000 microseconds!
 
    int intput;
    printf("Please enter a value between 1 and 10.\n");
    scanf("%d", &intput); 
-   for (i=0; i<intput; i++) {
-      tv.tv_usec *= 10;
-   }
 
-   if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
-      perror("Timout code Error");
-      exit(1);
-   }
-
-   /* open a socket */
-
+   // open a socket
    if ((sock_server = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
       perror("Server: can't open datagram socket\n");
       exit(1);
@@ -158,8 +149,19 @@ int main(void) {
    // try getTheLoad instead of sentence
    bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
-   printf("Received Sentence is: %s\n     with length %d\n\n",
-                         sentence, bytes_recd);
+   if (debug == 1) printf("Received Sentence is: %s\n     with length %d\n\n",
+                         getTheLoad.data, bytes_recd); // this works, apparently
+
+
+   if (debug == 1) printf("You entered %d as the timeout power, and tv_usec is now %d\n", intput, tv.tv_usec);
+   for (i=0; i<intput; i++) {
+      tv.tv_usec *= 10;
+      if (debug == 1) printf("tv_usec is now %d\n", tv.tv_usec);
+   }
+
+   if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+      printf("Timout expired for packet number zero\n");
+   }
 
    // error checking always...
    if (bytes_recd < 0) {
@@ -200,7 +202,7 @@ int main(void) {
       }
    }
 
-   // TODO ACKit
+   // TODO ACK filename?
 
    // open file
    fp = fopen(file_name, "r");
@@ -247,15 +249,19 @@ int main(void) {
       // wait for and get ACK
       bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
-      ACKcount++;
+      if (bytes_recd > 0 && ntohs(getTheLoad.sequenceNumber) == ntohs(payTheLoad.sequenceNumber)) {
+         ACKcount++;
+         printf("ACK %d received\n", ntohs(getTheLoad.sequenceNumber));
+      }
 
-      // TODO implement packet or ACK loss
+      // timeout FIXME if sock_server doesn't work
+      if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+         printf("Timeout expired for packet numbered %d\n", ntohs(payTheLoad.sequenceNumber));
+         TOcount++;
+      }
 
-      // TODO on timeout
-      //printf("Timeout expired for packet numbered %d\n", (totalPackets %2));
-      //TOcount++;
-      // on timeout or bad ACK, need to resend
-      while (getTheLoad.sequenceNumber != payTheLoad.sequenceNumber) { // TODO add timeout condition
+      // resend due to pad ack or timeout
+      while (getTheLoad.sequenceNumber != payTheLoad.sequenceNumber) { // no timeout check needed
          retransmits++;
          retransdata += sizeof(line);
          bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
@@ -279,18 +285,25 @@ int main(void) {
             printf("with %d data bytes\n", len);
          }
 
-
+         // wait for and get ACK
          bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
-               (struct sockaddr *) &client_addr, &client_addr_len);
-         ACKcount++;
-         // TODO need another timeout checker here?
-         // TOcount++
+                     (struct sockaddr *) &client_addr, &client_addr_len);
+         if (bytes_recd > 0 && ntohs(getTheLoad.sequenceNumber) == ntohs(payTheLoad.sequenceNumber)) {
+            ACKcount++;
+            printf("ACK %d received\n", ntohs(getTheLoad.sequenceNumber));
+         }
+
+         // timeout FIXME if sock_server doesn't work
+         if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+            printf("Timeout expired for packet numbered %d\n", ntohs(payTheLoad.sequenceNumber));
+            TOcount++;
+         }
+
       }
 
-      printf("ACK %d received\n", (totalPackets % 2));
-      ACKcount++;
       totalPackets++;
       totalCount += strlen(line);
+      bytes_recd = 0;
    }
 
    // send EOM packet
