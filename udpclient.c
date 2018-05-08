@@ -69,7 +69,7 @@ int main(void) {
 	int totalDataPacketsReceived = 0;
 	int ACKsTransmitted = 0;
 	int ACKsGeneratedDropped = 0;
-	int AcksGenerated = 0;
+	int ACKsGenerated = 0;
 
 
 	int timeoutHolder;
@@ -177,21 +177,16 @@ int main(void) {
 	/* receive ack for file name packet */
 
 /*	int microsec = 0;
-
 	while (microsec < timeout) {
 		clock_t before = clock();
 		do {
 			bytes_recd = recv(sock_client, &recdACK, sizeof(recdACK), 0);
-
 			if (ntohl(recdACK.ack) == 0) {
-
 				break;
 			}
-
 			clock_t difference = clock() - before;
 			microsec = difference * 1000000 / CLOCKS_PER_SEC;
 		} while (microsec < timeout);
-
 		if (microsec >= timeout && ntohl(recdACK.ack) == 1) {
 			microsec = 0;
 		}
@@ -233,6 +228,8 @@ int main(void) {
 					msg_len = recdPacket.count;
 
 					receivedDataPackets++;
+					totalDataPacketsReceived++;
+					dataBytesReceived = dataBytesReceived + msg_len;
 
 					printf("Packet %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
 
@@ -242,9 +239,10 @@ int main(void) {
 						fprintf(pFile, "%c", receivedSentence[i]);
 					}
 
+					sentACK.ack = htonl(expectedSequenceNumber);
+					ACKsGenerated++;
+
 					if(simulateACKLoss(ACKLossRate) == 0) {
-						sentACK.ack = htonl(expectedSequenceNumber);
-						ACKsGenerated++;
 						ACKsTransmitted++;
 						sendto(sock_client, &sentACK, sizeof(sentACK), 0,(struct sockaddr *) &server_addr, sizeof(server_addr));
 						printf("Ack %d transmitted", sentACK.ack);
@@ -262,18 +260,19 @@ int main(void) {
 				else {
 
 					printf("Duplicate packet %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
-					
+
+					totalDataPacketsReceived++;
 					duplicatePacketsReceived++;
-				
+
 					sentACK.ack = htonl(1 - expectedSequenceNumber);
-					ACKsGenerated++;				
+					ACKsGenerated++;
 
 					if(simulateACKLoss(ACKLossRate == 0) {
 						sendto(sock_client, &sentACK, sizeof(sentACK), 0, (struct sockaddr *) &server_addr, sizeof(server_addr));
-	
+
 						ACKsTransmitted++;
 					}
-					
+
 					else {
 						printf("ACK %d lost", 1- expectedSequenceNumber);
 						ACKsGeneratedDropped++;
