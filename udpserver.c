@@ -95,8 +95,12 @@ int main(void) {
       char data[80];
    };
 
-   int totalPackets=0;
-   int totalCount=0;
+   int totalPackets = 0;
+   int totalCount = 0;
+   int retransmits = 0;
+   int retransdata = 0;
+   int ACKcount = 0;
+   int TOcount = 0;
 
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
 
@@ -196,7 +200,7 @@ int main(void) {
       }
    }
 
-   // ACKit
+   // TODO ACKit
 
    // open file
    fp = fopen(file_name, "r");
@@ -224,7 +228,9 @@ int main(void) {
 
       // error checking
       if (bytes_sent < 0) {
-         perror("Header send error, trying again... ");
+         perror("Send error, trying again... ");
+         retransmits++;
+         retransdata += sizeof(line);
          bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
                (struct sockaddr*) &client_addr, client_addr_len);
          if (bytes_sent < 0)
@@ -233,31 +239,58 @@ int main(void) {
             printf("Resend successful. Party on.\n");
          }
       } else if (debug == 1) {
-         printf("Header packet number %d transmitted ", packet_count);
-         printf("with %d data bytes\n", bytes_sent);
+         printf("Packet %d transmitted ", totalPackets);
+         len = sizeof(line);
+         printf("with %d data bytes\n", len);
       }
 
       // wait for and get ACK
       bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
-      printf("Received Sentence is: %s\n     with length %d\n\n",
-                         sentence, bytes_recd);
+      ACKcount++;
 
       // TODO implement packet or ACK loss
 
+      // TODO on timeout
+      //printf("Timeout expired for packet numbered %d\n", (totalPackets %2));
+      //TOcount++;
       // on timeout or bad ACK, need to resend
       while (getTheLoad.sequenceNumber != payTheLoad.sequenceNumber) { // TODO add timeout condition
+         retransmits++;
+         retransdata += sizeof(line);
          bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
                (struct sockaddr*) &client_addr, client_addr_len);
 
+         // error checking
+         if (bytes_sent < 0) {
+            perror("Send error, trying again... ");
+            retransmits++;
+            retransdata += sizeof(line);
+            bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
+                  (struct sockaddr*) &client_addr, client_addr_len);
+            if (bytes_sent < 0)
+               perror("Resend failed, giving up.\n");
+            else {
+               printf("Resend successful. Party on.\n");
+            }
+         } else if (debug == 1) {
+            printf("Packet %d retransmitted ", (totalPackets % 2));
+            len = sizeof(line);
+            printf("with %d data bytes\n", len);
+         }
+
+
          bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
                (struct sockaddr *) &client_addr, &client_addr_len);
+         ACKcount++;
          // TODO need another timeout checker here?
        
       }
 
+      printf("ACK %d received\n", (totalPackets % 2));
+      ACKcount++;
       totalPackets++;
-      totalCount += strlen(line)+32;
+      totalCount += strlen(line);
    }
 
    // TODO send EOM packet
@@ -265,13 +298,24 @@ int main(void) {
    payTheLoad.sequenceNumber = htons(totalPackets % 2);
    payTheLoad.count = htons(0);
    memset(payTheLoad.data, 0, sizeof(payTheLoad.data));
+   len = sizeof(payTheLoad.data);
 
+   // send it out...
    bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
          (struct sockaddr*) &client_addr, client_addr_len);
-
+   printf("End of Transmission Packet with sequence number %d ", totalPackets % 2);
+   printf("transmitted with %d data bytes\n", len);
 
    // clean up a bit
    fclose(fp);
    close(sock_server);
+
+   printf("Statistics:\n");
+   printf("Number of data packets transmitted (initial transmission only): %d\n", totalPackets);
+   printf("Total number of data bytes transmitted (this should be the sum of the count fields of all transmitted packets when transmitted for the first time only): %d\n", totalCount);
+   printf("Total number of retransmissions: %d\n", retransmits);
+   printf("Total number of data packets transmitted (initial transmissions plus retransmissions): %d\n", totalCount + retransdata);
+   printf("Number of ACKs received: %d\n", ACKcount);
+   printf("Count of how many times timeout expired: %d\n", TOcount);
 }
 /* udp_server.c */
