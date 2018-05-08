@@ -1,5 +1,5 @@
 /* udp_client.c */
-/* Programmed by Adarsh Sethi */
+/* Programmed by Adarsh Sethi, Timothy Louie, Nazim Karaca */
 /* February 21, 2018 */
 
 #include <stdio.h>          /* for standard I/O functions */
@@ -60,6 +60,17 @@ int main(void) {
 	recdACK.ack = 0;
 
 	struct Ack sentACK;
+
+
+	int receivedDataPackets = 0;
+	int dataBytesReceived = 0;
+	int duplicatePacketsReceived = 0;
+	int dataPacketsDropped = 0;
+	int totalDataPacketsReceived = 0;
+	int ACKsTransmitted = 0;
+	int ACKsGeneratedDropped = 0;
+	int AcksGenerated = 0;
+
 
 	int timeoutHolder;
 	printf("Please enter a timeout value between 1 and 10\n");
@@ -161,9 +172,11 @@ int main(void) {
 		printf("check line 133");
 	}
 
+
+
 	/* receive ack for file name packet */
 
-	int microsec = 0;
+/*	int microsec = 0;
 
 	while (microsec < timeout) {
 		clock_t before = clock();
@@ -183,7 +196,7 @@ int main(void) {
 			microsec = 0;
 		}
 	}
-
+*/
 	/* Open file to write to */
 
 	FILE *pFile;
@@ -207,6 +220,7 @@ int main(void) {
 
 			if (simulateLoss(packetLossRate) == 1) {
 				printf("Packet %d lost", recdPacket.sequenceNumber);
+				dataPacketsDropped++;
 				continue;
 			}
 
@@ -218,6 +232,8 @@ int main(void) {
 					recdPacket.sequenceNumber = ntohs(recdPacket.sequenceNumber);
 					msg_len = recdPacket.count;
 
+					receivedDataPackets++;
+
 					printf("Packet %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
 
 					/* append data to file*/
@@ -227,7 +243,9 @@ int main(void) {
 					}
 
 					if(simulateACKLoss(ACKLossRate) == 0) {
-						sentACK.ack = expectedSequenceNumber;
+						sentACK.ack = htonl(expectedSequenceNumber);
+						ACKsGenerated++;
+						ACKsTransmitted++;
 						sendto(sock_client, &sentACK, sizeof(sentACK), 0,(struct sockaddr *) &server_addr, sizeof(server_addr));
 						printf("Ack %d transmitted", sentACK.ack);
 						expectedSequenceNumber = 1 - expectedSequenceNumber;
@@ -235,6 +253,7 @@ int main(void) {
 
 					else {
 						printf("ACK %d lost", expectedSequenceNumber);
+						ACKsGeneratedDropped++;
 						expectedSequenceNumber = 1 - expectedSequenceNumber;
 					}
 
@@ -243,10 +262,22 @@ int main(void) {
 				else {
 
 					printf("Duplicate packet %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
+					
+					duplicatePacketsReceived++;
+				
+					sentACK.ack = htonl(1 - expectedSequenceNumber);
+					ACKsGenerated++;				
 
-					sentACK.ack = 1 - expectedSequenceNumber;
-					sendto(sock_client, &sentACK, sizeof(sentACK), 0, (struct sockaddr *) &server_addr,
-							sizeof(server_addr));
+					if(simulateACKLoss(ACKLossRate == 0) {
+						sendto(sock_client, &sentACK, sizeof(sentACK), 0, (struct sockaddr *) &server_addr, sizeof(server_addr));
+	
+						ACKsTransmitted++;
+					}
+					
+					else {
+						printf("ACK %d lost", 1- expectedSequenceNumber);
+						ACKsGeneratedDropped++;
+					}
 					continue;
 				}
 			}
