@@ -95,6 +95,16 @@ int main(void) {
       char data[80];
    };
 
+   
+   struct ACK {
+	   int ack;
+   };
+   
+   struct ACK recdACK;
+   
+   int expectedSequenceNumber = 1;
+   
+   
    int microsec = 0;
    clock_t before = clock();
 
@@ -108,7 +118,8 @@ int main(void) {
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
    printf("Please enter a value between 1 and 10 for the power of the timeout\n");
    int intput;
-   scanf("%d", &intput); 
+   scanf("%d", &intput);
+   int timeout = pow(10,intput);
 
    // open a socket
    if ((sock_server = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -153,7 +164,6 @@ int main(void) {
 /*   struct timeval tv;
    tv.tv_sec = 0;
    tv.tv_usec = 1000; // one millisecond = 1000 microseconds!
-
    if (debug == 1) printf("You entered %d as the timeout power, and tv_usec is now %d\n", intput, tv.tv_usec);
    for (i=0; i<intput; i++) {
       tv.tv_usec *= 10;
@@ -227,33 +237,61 @@ int main(void) {
 
       retransmits--; //to undo the ++ at the end of this loop
       microsec = 0;
-      before = clock();
+      
 
 
       // unACKed send loop
-      while (payTheLoad.sequenceNumber != getTheLoad.sequenceNumber) {
-         /* send message */ 
+      while (payTheLoad.sequenceNumber != expectedSequenceNumber) {
+    	  before = clock();
+    	  /* send message */ 
+    	  
+    	  do {
          bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
                (struct sockaddr*) &client_addr, client_addr_len);
 
          // error checking
          if (bytes_sent < 0) {
-            perror("Send error, trying again... ");
+            perror("Send error");
             retransmits++;
             retransdata += sizeof(line);
-            bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
-               (struct sockaddr*) &client_addr, client_addr_len);
+           /* bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,           wait for timeout
+              (struct sockaddr*) &client_addr, client_addr_len);
+            
             if (bytes_sent < 0)
                perror("Resend failed, giving up.\n");
             else {
                printf("Resend successful. Party on.\n");
-            }
-         } else if (debug == 1) {
-            printf("Packet %d transmitted ", totalPackets);
+            }*/
+         }
+      
+         
+         else if (debug == 1) {
+            printf("Packet %d transmitted ", ntohl(payTheLoad.sequenceNumber));
             len = sizeof(line);
             printf("with %d data bytes\n", len);
          }
-
+         
+         
+         bytes_recd = recvfrom(sock_server, &recdACK, sizeof(getTheLoad), 0,
+                          (struct sockaddr *) &client_addr, &client_addr_len);
+         
+         if(bytes_recd >= 0 && ntohl(recdACK.ack) == expectedSequenceNumber) {
+        	 expectedSequenceNumber = 1 - expectedSequenceNumber;
+        	 break;
+         }
+         
+         
+         
+         clock_t difference = clock() - before;
+         microsec = difference * 1000000 / CLOCKS_PER_SEC;
+    	  }while(microsec < timeout);
+    	  
+    	  
+    	  if (microsec >= timeout) {
+    		  microsec = 0;
+    	  }
+    	  
+/*
          // wait for and get ACK with timeout
          bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
                   (struct sockaddr *) &client_addr, &client_addr_len);
@@ -266,7 +304,7 @@ int main(void) {
          microsec = difference * 1000000 / CLOCKS_PER_SEC;
          if (microsec >= timeout && ntohl(recdACK.ack) == 1) {
             microsec = 0;
-         }
+         }*/
       }
 
       /*if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
@@ -275,7 +313,7 @@ int main(void) {
       }*/
 
       // resend due to pad ack or timeout
-      while (getTheLoad.sequenceNumber != payTheLoad.sequenceNumber) { // no timeout check needed
+     /* while (getTheLoad.sequenceNumber != payTheLoad.sequenceNumber) { // no timeout check needed
          retransmits++;
          retransdata += sizeof(line);
          bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
@@ -319,7 +357,7 @@ int main(void) {
       totalCount += strlen(line);
       bytes_recd = 0;
    }
-
+*/
    // send EOM packet
    // prep payload
    payTheLoad.sequenceNumber = htons(totalPackets % 2);
