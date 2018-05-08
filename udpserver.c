@@ -95,6 +95,9 @@ int main(void) {
       char data[80];
    };
 
+   int microsec = 0;
+   clock_t before = clock();
+
    int totalPackets = 0;
    int totalCount = 0;
    int retransmits = 0;
@@ -218,36 +221,40 @@ int main(void) {
    while (( getline(&line, &len, fp)) > 0) {
 
       /* prepare the message to send */
-      payTheLoad.sequenceNumber = htons(1 - payTheLoad.sequenceNumber);
+      payTheLoad.sequenceNumber = htons(1 -ntohs(payTheLoad.sequenceNumber));
       payTheLoad.count = htons(totalCount+strlen(line));
       strncpy(payTheLoad.data, line, strlen(line));
 
-      /* send message */ 
-      bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
-               (struct sockaddr*) &client_addr, client_addr_len);
+      retransmits--; //to undo the ++ at the end of this loop
+      microsec = 0;
+      before = clock();
 
-      // error checking
-      if (bytes_sent < 0) {
-         perror("Send error, trying again... ");
-         retransmits++;
-         retransdata += sizeof(line);
+
+      // unACKed send loop
+      while (payTheLoad.sequenceNumber != getTheLoad.sequenceNumber) {
+         /* send message */ 
          bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
                (struct sockaddr*) &client_addr, client_addr_len);
-         if (bytes_sent < 0)
-            perror("Resend failed, giving up.\n");
-         else {
-            printf("Resend successful. Party on.\n");
-         }
-      } else if (debug == 1) {
-         printf("Packet %d transmitted ", totalPackets);
-         len = sizeof(line);
-         printf("with %d data bytes\n", len);
-      }
 
-      // wait for and get ACK with timeout
-      int microsec = 0;
-      clock_t before = clock();
-      do {
+         // error checking
+         if (bytes_sent < 0) {
+            perror("Send error, trying again... ");
+            retransmits++;
+            retransdata += sizeof(line);
+            bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
+               (struct sockaddr*) &client_addr, client_addr_len);
+            if (bytes_sent < 0)
+               perror("Resend failed, giving up.\n");
+            else {
+               printf("Resend successful. Party on.\n");
+            }
+         } else if (debug == 1) {
+            printf("Packet %d transmitted ", totalPackets);
+            len = sizeof(line);
+            printf("with %d data bytes\n", len);
+         }
+
+         // wait for and get ACK with timeout
          bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
                   (struct sockaddr *) &client_addr, &client_addr_len);
          if (bytes_recd > 0 && ntohs(getTheLoad.sequenceNumber) == ntohs(payTheLoad.sequenceNumber)) {
@@ -257,13 +264,11 @@ int main(void) {
          }
          clock_t difference = clock() - before;
          microsec = difference * 1000000 / CLOCKS_PER_SEC;
-      } while (microsec < timeout);
-      if (microsec >= timeout && ntohl(recdACK.ack) == 1) {
-         microsec = 0;
+         if (microsec >= timeout && ntohl(recdACK.ack) == 1) {
+            microsec = 0;
+         }
       }
 
-
-      // timeout FIXME if sock_server doesn't work
       /*if (setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
          printf("Timeout expired for packet numbered %d\n", ntohs(payTheLoad.sequenceNumber));
          TOcount++;
