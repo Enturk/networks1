@@ -297,6 +297,16 @@ int main(void) {
 	/* close the socket */
 
 	close(sock_client);
+
+	printf("Number of data packets received successfully: %d\n" , receivedDataPackets);
+	printf("Total number of data bytes received which are delivered to user: %d\n",dataBytesReceived);
+	printf("Total number of duplicate data packets received: %d\n", duplicatePacketsReceived);
+	printf("Number of data packets received but dropped due to loss: %d\n", dataPacketsDropped);
+	printf("Total number of data packets received: %d\n", totalDataPacketsReceived);
+	printf("Number of ACKs transmitted without loss: %d\n", ACKsTransmitted);
+	printf("Number of ACKs generated but dropped due to loss: %d\n", ACKsGeneratedDropped);
+	printf("Total number of ACKs generated: %d\n", ACKsGenerated);
+
 }
 
 int simulateLoss(double packetLossRate) {
