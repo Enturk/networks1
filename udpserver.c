@@ -104,12 +104,7 @@ int main(void) {
 
    // ask user for the timeout value as n = 1-10, with the timeout = 10^n
 
-   struct timeval tv;
-   tv.tv_sec = 0;
-   tv.tv_usec = 1000; // one millisecond = 1000 microseconds!
-
    int intput;
-   printf("Please enter a value between 1 and 10.\n");
    scanf("%d", &intput); 
 
    // open a socket
@@ -154,6 +149,9 @@ int main(void) {
 
 
    if (debug == 1) printf("You entered %d as the timeout power, and tv_usec is now %d\n", intput, tv.tv_usec);
+   struct timeval tv;
+   tv.tv_sec = 0;
+   tv.tv_usec = 1000; // one millisecond = 1000 microseconds!
    for (i=0; i<intput; i++) {
       tv.tv_usec *= 10;
       if (debug == 1) printf("tv_usec is now %d\n", tv.tv_usec);
