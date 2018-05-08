@@ -158,9 +158,12 @@ int main(void) {
    // try getTheLoad instead of sentence
    bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
-   if (debug == 1) printf("Received Sentence is: %s\n     with length %d\n\n",
-                         getTheLoad.data, bytes_recd); // this works, apparently
+   
+   if (debug == 1) {
+	   printf("Received Sentence is: %s\n", getTheLoad.data);
+	   printf("with length %d\n\n", bytes_recd); // this works, apparently
 
+   }
 /*   struct timeval tv;
    tv.tv_sec = 0;
    tv.tv_usec = 1000; // one millisecond = 1000 microseconds!
