@@ -41,7 +41,7 @@ int main(void) {
 
 	char fileName[STRING_SIZE];
 
-	int expectedSequenceNumber = 0;
+	int expectedSequenceNumber = 1;
 
 	struct packet {
 		int sequenceNumber;
@@ -56,11 +56,7 @@ int main(void) {
 		int ack;
 	};
 
-	struct fileNameSending {
-		char name[STRING_SIZE];
-	};
 
-	struct fileNameSending fileNamePacket;
 
 	struct Ack recdACK;
 	recdACK.ack = 0;
@@ -161,12 +157,15 @@ int main(void) {
 
 	/* Prepare file name packet */
 
+	struct packet namePacket;
+	
 	printf("Please enter the name of the file to be transferred: \n");
-	//scanf("%s", sentence);
-	scanf("%s", fileNamePacket.name);
+	scanf("%s", namePacket.data);
+	namePacket.count = strlen(namePacket.data);
+	namePacket.sequenceNumber = 1;
 	/* Send file name packet */
 	// FIXME scodaddr is problem
-	bytes_sent = sendto(sock_client, &fileNamePacket, sizeof(fileNamePacket), 0,
+	bytes_sent = sendto(sock_client, &namePacket, sizeof(namePacket), 0,
 			(struct sockaddr *) &server_addr, sizeof(server_addr));
 
 	if (bytes_sent == -1) {
