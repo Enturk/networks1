@@ -284,7 +284,7 @@ int main(void) {
                (struct sockaddr *) &client_addr, &client_addr_len);
          ACKcount++;
          // TODO need another timeout checker here?
-       
+         // TOcount++
       }
 
       printf("ACK %d received\n", (totalPackets % 2));
@@ -293,8 +293,8 @@ int main(void) {
       totalCount += strlen(line);
    }
 
-   // TODO send EOM packet
-   // TODO prep payload
+   // send EOM packet
+   // prep payload
    payTheLoad.sequenceNumber = htons(totalPackets % 2);
    payTheLoad.count = htons(0);
    memset(payTheLoad.data, 0, sizeof(payTheLoad.data));
@@ -310,7 +310,7 @@ int main(void) {
    fclose(fp);
    close(sock_server);
 
-   printf("Statistics:\n");
+   printf("Statistics:\n"); // yeah, those.
    printf("Number of data packets transmitted (initial transmission only): %d\n", totalPackets);
    printf("Total number of data bytes transmitted (this should be the sum of the count fields of all transmitted packets when transmitted for the first time only): %d\n", totalCount);
    printf("Total number of retransmissions: %d\n", retransmits);
