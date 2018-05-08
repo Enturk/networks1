@@ -267,7 +267,7 @@ int main(void) {
 					sentACK.ack = htonl(1 - expectedSequenceNumber);
 					ACKsGenerated++;
 
-					if(simulateACKLoss(ACKLossRate == 0) {
+					if(simulateACKLoss(ACKLossRate) == 0) {
 						sendto(sock_client, &sentACK, sizeof(sentACK), 0, (struct sockaddr *) &server_addr, sizeof(server_addr));
 
 						ACKsTransmitted++;
