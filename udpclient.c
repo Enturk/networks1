@@ -46,7 +46,7 @@ int main(void) {
 	struct packet {
 		int sequenceNumber;
 		int count;
-		char data[80];
+		char data[];
 	};
 
 	struct packet recdPacket;
@@ -160,7 +160,7 @@ int main(void) {
 	struct packet namePacket;
 	
 	printf("Please enter the name of the file to be transferred: \n");
-	scanf("%s", namePacket.data);
+	scanf("%s",namePacket.data);
 	namePacket.count = htonl(strlen(namePacket.data));
 	namePacket.sequenceNumber = htonl(1);
 	/* Send file name packet */
