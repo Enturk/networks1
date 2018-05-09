@@ -270,6 +270,7 @@ int main(void) {
          
          else if (debug == 1) {
             printf("Packet %d transmitted ", ntohl(payTheLoad.sequenceNumber));
+	    totalPackets++;
             len = sizeof(line);
             printf("with %zu data bytes\n", len);
          }
@@ -279,6 +280,7 @@ int main(void) {
                           (struct sockaddr *) &client_addr, &client_addr_len);
          
          if(bytes_recd >= 0 && ntohl(recdACK.ack) == expectedSequenceNumber) {
+		 ACKcount++;
         	 expectedSequenceNumber = 1 - expectedSequenceNumber;
         	 break;
          }
@@ -291,6 +293,7 @@ int main(void) {
     	  
     	  
     	  if (microsec >= timeout) {
+		  TOcount++;
     		  microsec = 0;
     	  }
     	  
@@ -362,7 +365,7 @@ int main(void) {
    }
 */
    }
-   // send EOM packet
+   // send EOT packet
    // prep payload
    payTheLoad.sequenceNumber = htons(totalPackets % 2);
    payTheLoad.count = htons(0);
