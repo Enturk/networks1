@@ -156,8 +156,8 @@ int main(void) {
    client_addr_len = sizeof (client_addr);
 
    // try getTheLoad instead of sentence
-   bytes_recd = recv(sock_server, &getTheLoad, sizeof(getTheLoad), 0);
-                   // (struct sockaddr *) &client_addr, &client_addr_len);
+   bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
+                   (struct sockaddr *) &client_addr, &client_addr_len);
    
    if (debug == 1) {
 	   printf("Received Sentence is: %s\n", getTheLoad.data);
