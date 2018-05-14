@@ -1,4 +1,4 @@
-* udp_client.c */
+/* udp_client.c */
 /* Programmed by Adarsh Sethi, Timothy Louie, Nazim Karaca */
 /* February 21, 2018 */
 
@@ -41,7 +41,8 @@ int main(void) {
 
 	char fileName[STRING_SIZE];
 
-	int expectedSequenceNumber = 1;
+	short int expectedSequenceNumber = 1;
+
 
 	struct packet {
 	        short int sequenceNumber;
@@ -225,15 +226,13 @@ int main(void) {
 
 				if (recdPacket.sequenceNumber == expectedSequenceNumber) {
 
-					recdPacket.count = (ntohs(recdPacket.count));
-					recdPacket.sequenceNumber = ntohs(recdPacket.sequenceNumber);
 					msg_len = recdPacket.count;
 
 					receivedDataPackets++;
 					totalDataPacketsReceived++;
 					dataBytesReceived = dataBytesReceived + msg_len;
 
-					printf("Packet %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
+					printf("Packet %d received with %d data bytes: \n", recdPacket.sequenceNumber,recdPacket.count);
 					printf("%s\n", recdPacket.data);
 
 					/* append data to file*/
@@ -248,12 +247,12 @@ int main(void) {
 					if(simulateACKLoss(ACKLossRate) == 0) {
 						ACKsTransmitted++;
 						sendto(sock_client, &sentACK, sizeof(sentACK), 0,(struct sockaddr *) &server_addr, sizeof(server_addr));
-						printf("Ack %d transmitted", sentACK.ack);
+						printf("Ack %d transmitted\n",ntohs(sentACK.ack));
 						expectedSequenceNumber = 1 - expectedSequenceNumber;
 					}
 
 					else {
-						printf("ACK %d lost", expectedSequenceNumber);
+						printf("ACK %d lost\n", expectedSequenceNumber);
 						ACKsGeneratedDropped++;
 						expectedSequenceNumber = 1 - expectedSequenceNumber;
 					}
@@ -262,12 +261,12 @@ int main(void) {
 
 				else {
 
-					printf("Duplicate packet %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
+					printf("Duplicate packet %d received with %d data bytes\n", recdPacket.sequenceNumber,recdPacket.count);
 
 					totalDataPacketsReceived++;
 					duplicatePacketsReceived++;
 
-					sentACK.ack = htons(1 - expectedSequenceNumber);
+					sentACK.ack = ntohs(1 - expectedSequenceNumber);
 					ACKsGenerated++;
 
 					if(simulateACKLoss(ACKLossRate) == 0) {
@@ -277,7 +276,7 @@ int main(void) {
 					}
 
 					else {
-						printf("ACK %d lost", 1- expectedSequenceNumber);
+						printf("ACK %d lost\n", 1- expectedSequenceNumber);
 						ACKsGeneratedDropped++;
 					}
 					continue;
@@ -288,7 +287,7 @@ int main(void) {
 		/* end of transmission packet */
 
 		else {                                  //recdpacket.count == 0
-			printf("End of transmission Packet with sequence number %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
+			printf("End of transmission Packet with sequence number %d received with %d data bytes\n", recdPacket.sequenceNumber,recdPacket.count);
 		}
 
 	}
