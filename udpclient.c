@@ -1,4 +1,4 @@
-/* udp_client.c */
+* udp_client.c */
 /* Programmed by Adarsh Sethi, Timothy Louie, Nazim Karaca */
 /* February 21, 2018 */
 
@@ -267,7 +267,7 @@ int main(void) {
 					totalDataPacketsReceived++;
 					duplicatePacketsReceived++;
 
-					sentACK.ack = htonl(1 - expectedSequenceNumber);
+					sentACK.ack = htons(1 - expectedSequenceNumber);
 					ACKsGenerated++;
 
 					if(simulateACKLoss(ACKLossRate) == 0) {
