@@ -220,9 +220,9 @@ int main(void) {
       close(sock_server);
       exit(1);
    }
-   // sending struct
+ 
    struct packetOLove payTheLoad;
-   payTheLoad.sequenceNumber = 1;
+ 
 
    //  main transmission loop
    while (( getline(&line, &len, fp)) > 0) {
@@ -230,17 +230,17 @@ int main(void) {
 	memset(&payTheLoad.data,0,sizeof(payTheLoad.data));
 
       /* prepare the message to send */
-      payTheLoad.sequenceNumber = htons(1 -ntohs(payTheLoad.sequenceNumber));
-      payTheLoad.count = htons(totalCount+strlen(line));
+      payTheLoad.sequenceNumber = htons(expectedSequenceNumber);
+     // payTheLoad.count = htons(totalCount+strlen(line));
       strncpy(payTheLoad.data, line, strlen(line));
+      payTheLoad.count = htons(strlen(payTheLoad.data));
 
       retransmits--; //to undo the ++ at the end of this loop
-      microsec = 0;
-      
+        
 
 
       // unACKed send loop
-      while (ntohs(payTheLoad.sequenceNumber) != expectedSequenceNumber) {
+ //     while (ntohs(payTheLoad.sequenceNumber) != expectedSequenceNumber) {
     	  
     	  /* send message */ 
     	 
@@ -257,11 +257,15 @@ int main(void) {
          bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
                (struct sockaddr*) &client_addr, client_addr_len);
 
+
+
          // error checking
          if (bytes_sent <= 0) {
             perror("Send error");
             retransmits++;
             retransdata += sizeof(line);
+	    TOcount++;
+	    continue;
            /* bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,           wait for timeout
               (struct sockaddr*) &client_addr, client_addr_len);
             
@@ -279,16 +283,28 @@ int main(void) {
             printf("with %d data bytes\n", ntohs(payTheLoad.count));
          }
          
-         
+	
+	       
+
+  
          bytes_recd = recvfrom(sock_server, &recdACK, sizeof(getTheLoad), 0,
                           (struct sockaddr *) &client_addr, &client_addr_len);
-         
+        
+
+
+ 
          if(bytes_recd >= 0 && ntohs(recdACK.ack) == expectedSequenceNumber) {
-        	 expectedSequenceNumber = 1 - expectedSequenceNumber;
-        	 break;
+        	 expectedSequenceNumber = 1 - expectedSequenceNumber
+        	 continue;
          }
     
-    	  
+    	 else {
+		continue;
+}
+		
+		
+
+ 
 /*
          // wait for and get ACK with timeout
          bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
