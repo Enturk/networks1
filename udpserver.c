@@ -156,8 +156,8 @@ int main(void) {
    client_addr_len = sizeof (client_addr);
 
    // try getTheLoad instead of sentence
-   bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
-                   (struct sockaddr *) &client_addr, &client_addr_len);
+   bytes_recd = recv(sock_server, &getTheLoad, sizeof(getTheLoad), 0);
+                   // (struct sockaddr *) &client_addr, &client_addr_len);
    
    if (debug == 1) {
 	   printf("Received Sentence is: %s\n", getTheLoad.data);
@@ -270,7 +270,6 @@ int main(void) {
          
          else if (debug == 1) {
             printf("Packet %d transmitted ", ntohl(payTheLoad.sequenceNumber));
-	    totalPackets++;
             len = sizeof(line);
             printf("with %zu data bytes\n", len);
          }
@@ -280,7 +279,6 @@ int main(void) {
                           (struct sockaddr *) &client_addr, &client_addr_len);
          
          if(bytes_recd >= 0 && ntohl(recdACK.ack) == expectedSequenceNumber) {
-		 ACKcount++;
         	 expectedSequenceNumber = 1 - expectedSequenceNumber;
         	 break;
          }
@@ -293,7 +291,6 @@ int main(void) {
     	  
     	  
     	  if (microsec >= timeout) {
-		  TOcount++;
     		  microsec = 0;
     	  }
     	  
@@ -365,7 +362,7 @@ int main(void) {
    }
 */
    }
-   // send EOT packet
+   // send EOM packet
    // prep payload
    payTheLoad.sequenceNumber = htons(totalPackets % 2);
    payTheLoad.count = htons(0);
