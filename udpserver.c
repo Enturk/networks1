@@ -90,19 +90,19 @@ int main(void) {
    short data_start = 0;
 
    struct packetOLove{
-      int sequenceNumber;
-      int count;
-      char data[];
+      short int sequenceNumber;
+      short int count;
+      char data[80];
    };
 
    
    struct ACK {
-	   int ack;
+	  short int ack;
    };
    
    struct ACK recdACK;
    
-   int expectedSequenceNumber = 1;
+   int expectedSequenceNumber = 0;
    
    
    int microsec = 0;
@@ -156,12 +156,12 @@ int main(void) {
    client_addr_len = sizeof (client_addr);
 
    // try getTheLoad instead of sentence
-   bytes_recd = recv(sock_server, &getTheLoad, sizeof(getTheLoad), 0);
-                   // (struct sockaddr *) &client_addr, &client_addr_len);
+   bytes_recd = recvfrom(sock_server, &getTheLoad, sizeof(getTheLoad), 0,
+                    (struct sockaddr *) &client_addr, &client_addr_len);
    
    if (debug == 1) {
 	   printf("Received Sentence is: %s\n", getTheLoad.data);
-	   printf("with length %d\n\n", bytes_recd); // this works, apparently
+	   printf("with length %d\n\n",ntohs(getTheLoad.count)); // this works, apparently
 
    }
 /*   struct timeval tv;
@@ -209,29 +209,25 @@ int main(void) {
       /* get filename */
       // string2char(&(payTheLoad.data), filename, paytheLoad.count);
 
-      if (debug == 1) {
-         printf("Received file request sentence:\n");
-         printf("%s", sentence);
-         printf("\nwith length %d\n\n", bytes_recd);
-      }
-   }
+}
 
-   // TODO ACK filename?
+
 
    // open file
-   fp = fopen(file_name, "r");
+   fp = fopen(getTheLoad.data, "r");
    if (fp == NULL) {
       perror("No file of requested name, hanging up on client.\n" );
       close(sock_server);
       exit(1);
    }
-
    // sending struct
    struct packetOLove payTheLoad;
    payTheLoad.sequenceNumber = 1;
 
    //  main transmission loop
    while (( getline(&line, &len, fp)) > 0) {
+      
+	memset(&payTheLoad.data,0,sizeof(payTheLoad.data));
 
       /* prepare the message to send */
       payTheLoad.sequenceNumber = htons(1 -ntohs(payTheLoad.sequenceNumber));
@@ -244,16 +240,25 @@ int main(void) {
 
 
       // unACKed send loop
-      while (payTheLoad.sequenceNumber != expectedSequenceNumber) {
-    	  before = clock();
-    	  /* send message */ 
+      while (ntohs(payTheLoad.sequenceNumber) != expectedSequenceNumber) {
     	  
-    	  do {
+    	  /* send message */ 
+    	 
+
+	//setting timeout
+
+
+	struct timeval timeout;
+	timeout.tv_sec = 10;
+	timeout.tv_usec = 0;
+
+	setsockopt(sock_server,SOL_SOCKET,SO_RCVTIMEO,(const void *)&timeout, sizeof(timeout));
+
          bytes_sent = sendto(sock_server, &payTheLoad, sizeof(payTheLoad), 0,
                (struct sockaddr*) &client_addr, client_addr_len);
 
          // error checking
-         if (bytes_sent < 0) {
+         if (bytes_sent <= 0) {
             perror("Send error");
             retransmits++;
             retransdata += sizeof(line);
@@ -268,31 +273,21 @@ int main(void) {
          }
       
          
-         else if (debug == 1) {
-            printf("Packet %d transmitted ", ntohl(payTheLoad.sequenceNumber));
-            len = sizeof(line);
-            printf("with %zu data bytes\n", len);
+         else {
+            printf("Packet %d transmitted ", ntohs(payTheLoad.sequenceNumber));
+           // len = sizeof(line);
+            printf("with %d data bytes\n", ntohs(payTheLoad.count));
          }
          
          
          bytes_recd = recvfrom(sock_server, &recdACK, sizeof(getTheLoad), 0,
                           (struct sockaddr *) &client_addr, &client_addr_len);
          
-         if(bytes_recd >= 0 && ntohl(recdACK.ack) == expectedSequenceNumber) {
+         if(bytes_recd >= 0 && ntohs(recdACK.ack) == expectedSequenceNumber) {
         	 expectedSequenceNumber = 1 - expectedSequenceNumber;
         	 break;
          }
-         
-         
-         
-         clock_t difference = clock() - before;
-         microsec = difference * 1000000 / CLOCKS_PER_SEC;
-    	  }while(microsec < timeout);
-    	  
-    	  
-    	  if (microsec >= timeout) {
-    		  microsec = 0;
-    	  }
+    
     	  
 /*
          // wait for and get ACK with timeout

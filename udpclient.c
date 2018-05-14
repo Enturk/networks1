@@ -44,16 +44,16 @@ int main(void) {
 	int expectedSequenceNumber = 1;
 
 	struct packet {
-		int sequenceNumber;
-		int count;
-		char data[];
+	        short int sequenceNumber;
+		short int count;
+		char data[80];
 	};
 
 	struct packet recdPacket;
 	recdPacket.count = -1; 		//in case default value is 0
 
 	struct Ack {
-		int ack;
+		short int ack;
 	};
 
 
@@ -161,8 +161,8 @@ int main(void) {
 	
 	printf("Please enter the name of the file to be transferred: \n");
 	scanf("%s",namePacket.data);
-	namePacket.count = htonl(strlen(namePacket.data));
-	namePacket.sequenceNumber = htonl(1);
+	namePacket.count = htons(strlen(namePacket.data));
+	namePacket.sequenceNumber = htons(1);
 	/* Send file name packet */
 	// FIXME scodaddr is problem
 	bytes_sent = sendto(sock_client, &namePacket, sizeof(namePacket), 0,
@@ -205,11 +205,13 @@ int main(void) {
 
 	/*receive packets from server */
 
-	while (ntohl(recdPacket.count) != 0) {
+	while (ntohs(recdPacket.count) != 0) {
+		
+		memset(&recdPacket,0,sizeof(recdPacket));
 
-		bytes_recd = recv(sock_client, &recdPacket, sizeof(recdPacket), 0);
-		recdPacket.sequenceNumber = ntohl(recdPacket.sequenceNumber);
-		recdPacket.count = ntohl(recdPacket.count);
+		bytes_recd = recvfrom(sock_client, &recdPacket, sizeof(recdPacket), 0, (struct sockaddr *) 0, (int *) 0);
+		recdPacket.sequenceNumber = ntohs(recdPacket.sequenceNumber);
+		recdPacket.count = ntohs(recdPacket.count);
 
 		if (recdPacket.count != 0) {
 
@@ -232,14 +234,15 @@ int main(void) {
 					dataBytesReceived = dataBytesReceived + msg_len;
 
 					printf("Packet %d received with %d data bytes", recdPacket.sequenceNumber,recdPacket.count);
+					printf("%s\n", recdPacket.data);
 
 					/* append data to file*/
 
 					for (i = 0; i < msg_len; i++) {
-						fprintf(pFile, "%c", receivedSentence[i]);
+						fprintf(pFile, "%c", recdPacket.data[i]);
 					}
 
-					sentACK.ack = htonl(expectedSequenceNumber);
+					sentACK.ack = htons(expectedSequenceNumber);
 					ACKsGenerated++;
 
 					if(simulateACKLoss(ACKLossRate) == 0) {
