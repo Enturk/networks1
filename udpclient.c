@@ -41,7 +41,7 @@ int main(void) {
 
 	char fileName[STRING_SIZE];
 
-	short int expectedSequenceNumber = 1;
+	short int expectedSequenceNumber = 0;
 
 
 	struct packet {
@@ -197,7 +197,7 @@ int main(void) {
 
 	FILE *pFile;
 
-	pFile = fopen("out.txt", "a");
+	pFile = fopen("out.txt", "w");
 	if (pFile == NULL) {
 		perror("Error opening file.");
 		close(sock_client);
@@ -233,7 +233,7 @@ int main(void) {
 					dataBytesReceived = dataBytesReceived + msg_len;
 
 					printf("Packet %d received with %d data bytes: \n", recdPacket.sequenceNumber,recdPacket.count);
-					printf("%s\n", recdPacket.data);
+//					printf("%s\n", recdPacket.data);
 
 					/* append data to file*/
 

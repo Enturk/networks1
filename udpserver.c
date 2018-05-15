@@ -225,7 +225,7 @@ int main(void) {
 		strncpy(payTheLoad.data, line, strlen(line));
 		payTheLoad.count = htons(strlen(payTheLoad.data));
 
-		retransmits--; //to undo the ++ at the end of this loop
+	//	retransmits--; //to undo the ++ at the end of this loop
 
 		// unACKed send loop
 		//     while (ntohs(payTheLoad.sequenceNumber) != expectedSequenceNumber) {
@@ -265,17 +265,23 @@ int main(void) {
 			printf("Packet %d transmitted ", ntohs(payTheLoad.sequenceNumber));
 			// len = sizeof(line);
 			printf("with %d data bytes\n", ntohs(payTheLoad.count));
+			totalPackets++;
+			totalCount = totalCount + ntohs(payTheLoad.count);
 		}
 
 		bytes_recd = recvfrom(sock_server, &recdACK, sizeof(getTheLoad), 0,
 				(struct sockaddr *) &client_addr, &client_addr_len);
 
 		if (bytes_recd >= 0 && ntohs(recdACK.ack) == expectedSequenceNumber) {
+			ACKcount++;
 			expectedSequenceNumber = 1 - expectedSequenceNumber;
 			continue;
 		}
 
 		else {
+			TOcount++;
+			retransmits++;
+			retransdata++;
 			continue;
 		}
 	}
