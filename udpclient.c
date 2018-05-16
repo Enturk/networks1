@@ -12,12 +12,14 @@
 #include <time.h>
 #include <math.h>
 
+
 #define STRING_SIZE 112
 
 int simulateLoss(double packetLossRate);
 int simulateACKLoss(double ACKLossRate);
 
 int main(void) {
+
 
 	int sock_client; /* Socket used by client */
 
@@ -75,11 +77,11 @@ int main(void) {
 	int ACKsGenerated = 0;
 
 
-	int timeoutHolder;
+/*	int timeoutHolder;
 	printf("Please enter a timeout value between 1 and 10\n");
 	scanf("%d", &timeoutHolder);
 	timeout = pow(10, timeoutHolder);
-
+*/
 
 	double packetLossRate;
 	printf("Please enter a packet loss rate value between 0 and 1\n");
@@ -217,7 +219,7 @@ int main(void) {
 		if (recdPacket.count != 0) {
 
 			if (simulateLoss(packetLossRate) == 1) {
-				printf("Packet %d lost", recdPacket.sequenceNumber);
+				printf("Packet %d lost\n", recdPacket.sequenceNumber);
 				dataPacketsDropped++;
 				continue;
 			}
@@ -271,6 +273,7 @@ int main(void) {
 
 					if(simulateACKLoss(ACKLossRate) == 0) {
 						sendto(sock_client, &sentACK, sizeof(sentACK), 0, (struct sockaddr *) &server_addr, sizeof(server_addr));
+						printf("ACK %d transmitted\n", htons(sentACK.ack));
 
 						ACKsTransmitted++;
 					}
@@ -312,10 +315,10 @@ int main(void) {
 }
 
 int simulateLoss(double packetLossRate) {
-	srand(time(NULL));
-	double randomNumber = rand() % 1;
+	int randomNumber = rand() % 100 ;
+	double percent = (double)randomNumber / 100;
 
-	if(randomNumber < packetLossRate) {
+	if(percent < packetLossRate) {
 		return 1;
 	}
 	else {
@@ -324,10 +327,10 @@ int simulateLoss(double packetLossRate) {
 }
 
 int simulateACKLoss(double ACKLossRate) {
-	srand(time(NULL));
-	double randomNumber = rand() % 1;
+	int randomNumber = rand() % 100;
+	double percent = (double)randomNumber / 100;
 
-	if(randomNumber < ACKLossRate) {
+	if(percent < ACKLossRate) {
 		return 1;
 	}
 

@@ -235,7 +235,7 @@ int main(void) {
 		//setting timeout
 
 		struct timeval timeout;
-		timeout.tv_sec = 10;
+		timeout.tv_sec = intput;
 		timeout.tv_usec = 0;
 
 		setsockopt(sock_server, SOL_SOCKET, SO_RCVTIMEO,
